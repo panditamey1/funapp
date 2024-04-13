@@ -31,16 +31,29 @@ def save_number(num, file_path):
     df = pd.concat([df, new_row], ignore_index=True)
     df.to_csv(file_path, index=False)
 
-def analyze_number(num, file_path):
+def number_follows_analysis(file_path):
+    """Analyzes which number often follows each number and their counts."""
     df = pd.read_csv(file_path)
-    count = df[df['Number'].isin([num])]['Number'].count()
-    return count
+    result = {}
+    previous_num = None
+    for num in df['Number']:
+        if previous_num is not None:
+            if previous_num in result:
+                if num in result[previous_num]:
+                    result[previous_num][num] += 1
+                else:
+                    result[previous_num][num] = 1
+            else:
+                result[previous_num] = {num: 1}
+        previous_num = num
+    return result
 
-def total_matches(file_path):
-    df = pd.read_csv(file_path)
-    matches = df[df['Number'].isin(numbers_list)].shape[0]
-    total = df.shape[0]
-    return matches, total
+def display_analysis(analysis):
+    """Converts analysis dictionary to a readable format and displays it."""
+    for key, value in analysis.items():
+        st.subheader(f'Number {key} is followed by:')
+        for k, v in value.items():
+            st.text(f'Number {k}: {v} times')
 
 # Streamlit user interface
 st.title('Number Input and Analysis')
@@ -79,10 +92,8 @@ if selected_file:
         if st.session_state.selected_number is not None:
             num = st.session_state.selected_number
             save_number(num, selected_file)
-            count = analyze_number(num, selected_file)
-            matches, total = total_matches(selected_file)
+            analysis = number_follows_analysis(selected_file)
+            display_analysis(analysis)
             st.success(f'Number {num} saved!')
-            st.info(f'The number {num} has appeared {count} times in the list.')
-            st.info(f'Out of {total} entries, {matches} are in the predefined list.')
         else:
             st.error('Please select a number before submitting.')

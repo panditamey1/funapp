@@ -16,8 +16,10 @@ if not os.path.exists(file_path):
 def save_number(num):
     # Load existing data
     df = pd.read_csv(file_path)
-    # Append new number
-    df = df.append({'Number': num}, ignore_index=True)
+    # Create a new DataFrame for the new number
+    new_row = pd.DataFrame({'Number': [num]})
+    # Use concat to append the new row
+    df = pd.concat([df, new_row], ignore_index=True)
     # Save back to CSV
     df.to_csv(file_path, index=False)
 

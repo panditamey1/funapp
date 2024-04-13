@@ -40,11 +40,26 @@ def total_matches():
 
 # Streamlit user interface
 st.title('Number Input and Analysis')
-number = st.number_input('Enter a number', step=1)
 
-if st.button('Submit'):
-    save_number(number)
-    count = analyze_number(number)
-    matches, total = total_matches()
-    st.success(f'The number {number} has appeared {count} times in the list.')
-    st.info(f'Out of {total} entries, {matches} are in the predefined list.')
+# Create buttons for numbers 0 to 36 and handle interactions
+col1, col2 = st.columns(2)
+
+with col1:
+    for i in range(19):  # First 19 numbers
+        if st.button(f'{i}', key=f'num_{i}'):
+            save_number(i)
+            count = analyze_number(i)
+            matches, total = total_matches()
+            st.success(f'Number {i} saved!')
+            st.info(f'The number {i} has appeared {count} times in the list.')
+            st.info(f'Out of {total} entries, {matches} are in the predefined list.')
+
+with col2:
+    for i in range(19, 37):  # Remaining numbers
+        if st.button(f'{i}', key=f'num_{i}'):
+            save_number(i)
+            count = analyze_number(i)
+            matches, total = total_matches()
+            st.success(f'Number {i} saved!')
+            st.info(f'The number {i} has appeared {count} times in the list.')
+            st.info(f'Out of {total} entries, {matches} are in the predefined list.')

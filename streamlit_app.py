@@ -73,10 +73,6 @@ if create_button and new_file:
 if selected_file:
     st.write(f'You are working with: {selected_file}')
 
-    # Initialize the selected number in session state if not already done
-    if 'selected_number' not in st.session_state:
-        st.session_state.selected_number = None
-
     # Layout the numbers in three rows
     numbers_per_row = 12
     for i in range(0, 37, numbers_per_row):
@@ -89,11 +85,12 @@ if selected_file:
                 st.session_state.selected_number = idx
 
     if st.button('Submit Number'):
-        if st.session_state.selected_number is not None:
+        if 'selected_number' in st.session_state and st.session_state.selected_number is not None:
             num = st.session_state.selected_number
             save_number(num, selected_file)
-            analysis = number_follows_analysis(selected_file)
-            display_analysis(analysis)
             st.success(f'Number {num} saved!')
-        else:
-            st.error('Please select a number before submitting.')
+
+    if st.button('Show Analysis'):
+        # Perform analysis and display results
+        analysis = number_follows_analysis(selected_file)
+        display_analysis(analysis)

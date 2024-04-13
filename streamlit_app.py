@@ -41,25 +41,29 @@ def total_matches():
 # Streamlit user interface
 st.title('Number Input and Analysis')
 
-# Create buttons for numbers 0 to 36 and handle interactions
-col1, col2 = st.columns(2)
+# Initialize the selected number in session state if not already done
+if 'selected_number' not in st.session_state:
+    st.session_state.selected_number = None
 
-with col1:
-    for i in range(19):  # First 19 numbers
-        if st.button(f'{i}', key=f'num_{i}'):
-            save_number(i)
-            count = analyze_number(i)
-            matches, total = total_matches()
-            st.success(f'Number {i} saved!')
-            st.info(f'The number {i} has appeared {count} times in the list.')
-            st.info(f'Out of {total} entries, {matches} are in the predefined list.')
+# Layout the numbers in three rows
+numbers_per_row = 12
+for i in range(0, 37, numbers_per_row):
+    cols = st.columns(numbers_per_row)
+    for j in range(numbers_per_row):
+        idx = i + j
+        if idx > 36:
+            break
+        if cols[j].button(f'{idx}', key=f'num_{idx}'):
+            st.session_state.selected_number = idx
 
-with col2:
-    for i in range(19, 37):  # Remaining numbers
-        if st.button(f'{i}', key=f'num_{i}'):
-            save_number(i)
-            count = analyze_number(i)
-            matches, total = total_matches()
-            st.success(f'Number {i} saved!')
-            st.info(f'The number {i} has appeared {count} times in the list.')
-            st.info(f'Out of {total} entries, {matches} are in the predefined list.')
+if st.button('Submit Number'):
+    if st.session_state.selected_number is not None:
+        num = st.session_state.selected_number
+        save_number(num)
+        count = analyze_number(num)
+        matches, total = total_matches()
+        st.success(f'Number {num} saved!')
+        st.info(f'The number {num} has appeared {count} times in the list.')
+        st.info(f'Out of {total} entries, {matches} are in the predefined list.')
+    else:
+        st.error('Please select a number before submitting.')

@@ -31,29 +31,30 @@ def save_number(num, file_path):
     df = pd.concat([df, new_row], ignore_index=True)
     df.to_csv(file_path, index=False)
 
-def number_follows_analysis(file_path):
-    """Analyzes which number often follows each number and their counts."""
+def group_follows_analysis(file_path):
+    """Analyzes which number from the predefined list often follows any number and their counts."""
     df = pd.read_csv(file_path)
     result = {}
     previous_num = None
     for num in df['Number']:
-        if previous_num is not None:
-            if previous_num in result:
-                if num in result[previous_num]:
-                    result[previous_num][num] += 1
+        if previous_num is not None and previous_num not in numbers_list:
+            if num in numbers_list:
+                if previous_num in result:
+                    if num in result[previous_num]:
+                        result[previous_num][num] += 1
+                    else:
+                        result[previous_num][num] = 1
                 else:
-                    result[previous_num][num] = 1
-            else:
-                result[previous_num] = {num: 1}
+                    result[previous_num] = {num: 1}
         previous_num = num
     return result
 
-def display_analysis(analysis):
-    """Converts analysis dictionary to a readable format and displays it."""
+def display_group_analysis(analysis):
+    """Displays the result of how often numbers from a group follow other numbers."""
     for key, value in analysis.items():
         st.subheader(f'Number {key} is followed by:')
         for k, v in value.items():
-            st.text(f'Number {k}: {v} times')
+            st.text(f'Number {k} from the group: {v} times')
 
 # Streamlit user interface
 st.title('Number Input and Analysis')
@@ -91,6 +92,6 @@ if selected_file:
             st.success(f'Number {num} saved!')
 
     if st.button('Show Analysis'):
-        # Perform analysis and display results
-        analysis = number_follows_analysis(selected_file)
-        display_analysis(analysis)
+        # Perform group analysis and display results
+        analysis = group_follows_analysis(selected_file)
+        display_group_analysis(analysis)

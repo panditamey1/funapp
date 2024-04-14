@@ -31,6 +31,34 @@ def save_lists(lists):
 def get_csv_files():
     """Returns a list of csv files from the csv_directory."""
     return glob.glob(os.path.join(csv_directory, '*.csv'))
+def get_consecutive_sequences(file_path, numbers_list):
+    # Read the CSV file
+    df = pd.read_csv(file_path)
+    
+    # Assume the CSV has a single column named 'Number' containing the numbers
+    numbers = df['Number'].tolist()
+    
+    sequences = []  # This will hold the list of sequences found
+    current_sequence = []  # Temporary storage for the current sequence
+
+    # Iterate over the numbers in the CSV
+    for number in numbers:
+        if number in numbers_list:
+            # If the number is in the list, add to the current sequence
+            current_sequence.append(number)
+        else:
+            # If the number is not in the list, check if there was an ongoing sequence
+            if current_sequence:
+                # If there was a sequence, add it to the sequences list and reset
+                sequences.append(current_sequence)
+                current_sequence = []  # Reset the current sequence
+    
+    # Check if there's an unfinished sequence at the end of the file
+    if current_sequence:
+        sequences.append(current_sequence)
+    
+    return sequences
+
 
 def analyze_continuous_sequences(file_path, lists):
     df = pd.read_csv(file_path)
@@ -201,7 +229,10 @@ def app():
                 st.write(pd.DataFrame({
                     "Sequence Length": stats['sequences']
                 }).transpose())
-
+            for sl in selected_lists:
+                st.write(f"List: {sl}")
+                sequences = get_consecutive_sequences(file_path, predefined_list_1)
+                st.write(f"Sequences : {sequences}")
             triple_counts = count_consecutive_triples(selected_file, selected_lists)
             st.subheader("Count of Consecutive Triples")
             for list_name, count in triple_counts.items():

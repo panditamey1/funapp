@@ -62,18 +62,18 @@ def get_consecutive_sequences(file_path, numbers_list):
 def analyze_and_extract_sequences(file_path, lists):
     df = pd.read_csv(file_path)
     numbers = df['Number']
-    sequences = {name: [] for name in lists.keys()}
-    actual_sequences = {name: [] for name in lists.keys()}
+    sequences = {name: [] for name in lists.keys()}  # Stores counts of sequences
+    actual_sequences = {name: [] for name in lists.keys()}  # Stores actual sequences
     consecutive_doubles = {name: 0 for name in lists.keys()}
     failed_doubles = {name: 0 for name in lists.keys()}
+    double_sequences = {name: [] for name in lists.keys()}  # Tracks successful double sequences
+    failed_double_sequences = {name: [] for name in lists.keys()}  # Tracks failed double sequences
     consecutive_triples = {name: 0 for name in lists.keys()}
     failed_triples = {name: 0 for name in lists.keys()}
-    double_sequences = {name: [] for name in lists.keys()}
-    triple_sequences = {name: [] for name in lists.keys()}
-    failed_double_sequences = {name: [] for name in lists.keys()}
-    failed_triple_sequences = {name: [] for name in lists.keys()}
+    triple_sequences = {name: [] for name in lists.keys()}  # Tracks successful triple sequences
+    failed_triple_sequences = {name: [] for name in lists.keys()}  # Tracks failed triple sequences
     current_list = None
-    current_sequence = []
+    current_sequence = []  # Current sequence of numbers
 
     for i, number in enumerate(numbers):
         found = False
@@ -84,12 +84,14 @@ def analyze_and_extract_sequences(file_path, lists):
                     if len(current_sequence) == 2:
                         consecutive_doubles[list_name] += 1
                         double_sequences[list_name].append(list(current_sequence))
-                    elif len(current_sequence) >= 3:
+                    elif len(current_sequence) == 3:
                         consecutive_triples[list_name] += 1
                         triple_sequences[list_name].append(list(current_sequence[:3]))
                         current_sequence = current_sequence[-2:]  # Start new sequence potentially
                 else:
-                    if current_list is not None and len(current_sequence) >= 2:
+                    if current_list is not None:
+                        sequences[current_list].append(len(current_sequence))
+                        actual_sequences[current_list].append(current_sequence)
                         if len(current_sequence) == 2:
                             failed_doubles[current_list] += 1
                             failed_double_sequences[current_list].append(list(current_sequence))
@@ -101,6 +103,8 @@ def analyze_and_extract_sequences(file_path, lists):
                 found = True
                 break
         if not found and current_list is not None:
+            sequences[current_list].append(len(current_sequence))
+            actual_sequences[current_list].append(current_sequence)
             if len(current_sequence) == 2:
                 failed_doubles[current_list] += 1
                 failed_double_sequences[current_list].append(list(current_sequence))
@@ -114,22 +118,28 @@ def analyze_and_extract_sequences(file_path, lists):
         sequences[current_list].append(len(current_sequence))
         actual_sequences[current_list].append(current_sequence)
 
+    # Compute statistics for each list
     stats = {}
     for list_name, seqs in sequences.items():
+        total_series = len(seqs) - 1 if len(seqs) > 1 else 0
+        avg_length = sum(seqs) / len(seqs) if seqs else 0
         stats[list_name] = {
             "sequences": seqs,
             "actual_sequences": actual_sequences[list_name],
+            "total_series_after_first": total_series,
+            "average_series_length": avg_length,
             "consecutive_doubles": consecutive_doubles[list_name],
             "failed_doubles": failed_doubles[list_name],
+            "double_sequences": double_sequences[list_name],
+            "failed_double_sequences": failed_double_sequences[list_name],
             "consecutive_triples": consecutive_triples[list_name],
             "failed_triples": failed_triples[list_name],
-            "double_sequences": double_sequences[list_name],
             "triple_sequences": triple_sequences[list_name],
-            "failed_double_sequences": failed_double_sequences[list_name],
             "failed_triple_sequences": failed_triple_sequences[list_name]
         }
 
     return stats, numbers.tolist()
+
 
 
 def analyze_continuous_sequences(file_path, lists):
@@ -329,7 +339,7 @@ def app():
 
                 with st.expander("Show actual sequences"):
                     st.write("actual_sequences:", stats['actual_sequences'])                    
-                #st.write("Total series after first occurrence:", stats['total_series_after_first'])
+                st.write("Total series after first occurrence:", stats['total_series_after_first'])
                 st.write("Average series length:", stats['average_series_length'])
                 st.write("Consecutive Doubles:", stats['consecutive_doubles'])
                 st.write("Failed Doubles:", stats['failed_doubles'])

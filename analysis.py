@@ -3,12 +3,30 @@ import pandas as pd
 import os
 import glob
 import plotly.express as px
+import json
 
 csv_directory = 'csv_files'
+list_file_path = 'predefined_lists.json'
 
 # Ensure the directory for CSV files exists
 if not os.path.exists(csv_directory):
     os.makedirs(csv_directory)
+
+# Load or initialize predefined lists
+def load_lists():
+    if os.path.exists(list_file_path):
+        with open(list_file_path, 'r') as file:
+            return json.load(file)
+    else:
+        return {
+            "Big": [22, 18, 29, 7, 28, 12, 35, 3, 26, 0, 32, 15, 19, 4, 21, 2, 25],
+            "Orph": [1, 20, 14, 31, 9, 17, 34, 6],
+            "Small": [27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33]
+        }
+
+def save_lists(lists):
+    with open(list_file_path, 'w') as file:
+        json.dump(lists, file, indent=4)
 
 def get_csv_files():
     """Returns a list of csv files from the csv_directory."""
@@ -73,6 +91,32 @@ def count_numbers_by_list(file_path, lists):
 def app():
     st.title('Analysis of Number Sequences')
 
+    # Load or initialize lists
+    lists = load_lists()
+
+    # Allow the user to add a new list
+    with st.expander("Manage Lists"):
+        new_list_name = st.text_input("Enter new list name:")
+        
+        # Generate checkboxes for number selection from 0 to 36
+        number_grid = {i: st.checkbox(f"{i}", key=f"num_{i}") for i in range(37)}
+        selected_numbers = [num for num, checked in number_grid.items() if checked]
+
+        if st.button("Add New List"):
+            if new_list_name and selected_numbers:
+                lists[new_list_name] = selected_numbers
+                save_lists(lists)
+                st.success(f"List '{new_list_name}' added successfully.")
+
+        # Option to delete a list
+        delete_list_name = st.selectbox("Select a list to delete:", list(lists.keys()))
+        if st.button("Delete List"):
+            if delete_list_name in lists:
+                del lists[delete_list_name]
+                save_lists(lists)
+                st.success(f"List '{delete_list_name}' deleted successfully.")
+
+
     # File upload functionality
     uploaded_file = st.file_uploader("Upload a CSV file for analysis", type=['csv'])
     if uploaded_file is not None:
@@ -85,36 +129,16 @@ def app():
     existing_files = get_csv_files()
     selected_file = st.selectbox('Or select an existing CSV file:', existing_files)
 
-    # Predefined lists
-    predefined_lists = {
-        "Big": [22, 18, 29, 7, 28, 12, 35, 3, 26, 0, 32, 15, 19, 4, 21, 2, 25],
-        "Orph": [1, 20, 14, 31, 9, 17, 34, 6],
-        "Small": [27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33]
-    }
-
     # User selects which lists to combine
-    list_selection = st.multiselect("Select number lists to combine:", list(predefined_lists.keys()), default=list(predefined_lists.keys()))
-
-    # Create new list combinations based on selection
-    combined_lists = {}
-    if list_selection:
-        # Combine selected lists
-        combined_list_numbers = []
-        for lst in list_selection:
-            combined_list_numbers.extend(predefined_lists[lst])
-        combined_lists[" + ".join(list_selection)] = combined_list_numbers
-
-        # Add unselected lists
-        for key in predefined_lists:
-            if key not in list_selection:
-                combined_lists[key] = predefined_lists[key]
+    list_selection = st.multiselect("Select number lists to combine:", list(lists.keys()), default=list(lists.keys()))
 
     if st.button('Show Analysis') and selected_file:
         # Perform analysis
-        counts = count_numbers_by_list(selected_file, combined_lists)
+        selected_lists = {name: lists[name] for name in list_selection}
+        counts = count_numbers_by_list(selected_file, selected_lists)
         data = pd.DataFrame({
-            "List": list(combined_lists.keys()),
-            "Count": [counts[name] for name in combined_lists]
+            "List": list_selection,
+            "Count": [counts[name] for name in list_selection]
         })
 
         # Pivot the data for a stacked bar chart
@@ -127,10 +151,10 @@ def app():
 
         # Display the figure
         st.plotly_chart(fig)
-        results = analyze_continuous_sequences(selected_file, combined_lists)
+        results = analyze_continuous_sequences(selected_file, selected_lists)
         for list_name, stats in results.items():
             st.subheader(f"List: {list_name}")
-            with st.expander("show sequences"):
+            with st.expander("Show sequences"):
                 st.write("Sequences:", stats['sequences'])
             st.write("Total series after first occurrence:", stats['total_series_after_first'])
             st.write("Average series length:", stats['average_series_length'])

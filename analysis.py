@@ -34,34 +34,49 @@ def get_csv_files():
 
 def analyze_continuous_sequences(file_path, lists):
     df = pd.read_csv(file_path)
-    numbers = df['Number'].tolist()
+    numbers = df['Number']
     sequences = {name: [] for name in lists.keys()}
     current_list = None
-    current_sequence = []
+    current_count = 0
 
     for number in numbers:
         found = False
         for list_name, list_numbers in lists.items():
             if number in list_numbers:
                 if current_list == list_name:
-                    current_sequence.append(number)
+                    current_count += 1
                 else:
                     if current_list is not None:
-                        sequences[current_list].append(current_sequence)
+                        sequences[current_list].append(current_count)
                     current_list = list_name
-                    current_sequence = [number]
+                    current_count = 1
                 found = True
                 break
         if not found and current_list is not None:
-            sequences[current_list].append(current_sequence)
+            sequences[current_list].append(current_count)
             current_list = None
-            current_sequence = []
+            current_count = 0
 
-    # Append the last sequence if it ended right at the end of the numbers
-    if current_sequence:
-        sequences[current_list].append(current_sequence)
+    # Append the last sequence if it ended right at the end of the loop
+    if current_count > 0:
+        sequences[current_list].append(current_count)
 
-    return sequences
+    # Compute statistics for each list
+    stats = {}
+    for list_name, seqs in sequences.items():
+        if seqs:
+            total_series = len(seqs) - 1 if len(seqs) > 1 else 0
+            avg_length = sum(seqs) / len(seqs)
+        else:
+            total_series = 0
+            avg_length = 0
+        stats[list_name] = {
+            "sequences": seqs,
+            "total_series_after_first": total_series,
+            "average_series_length": avg_length
+        }
+
+    return stats, numbers.tolist() 
 
 
 def count_consecutive_triples(file_path, lists):
@@ -178,7 +193,7 @@ def app():
             for list_name, stats in results.items():
                 st.subheader(f"List: {list_name}")
                 with st.expander("Show sequences"):
-                    st.write(f"Sequences: {seqs}")
+                    st.write("Sequences:", stats['sequences'])
                 st.write("Total series after first occurrence:", stats['total_series_after_first'])
                 st.write("Average series length:", stats['average_series_length'])
                 st.write(pd.DataFrame({

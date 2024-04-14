@@ -32,62 +32,6 @@ def get_csv_files():
     """Returns a list of csv files from the csv_directory."""
     return glob.glob(os.path.join(csv_directory, '*.csv'))
 
-def analyze_continuous_sequences(file_path, lists):
-    df = pd.read_csv(file_path)
-    numbers = df['Number']
-    current_list = None
-    current_count = 0
-    sequences = {name: [] for name in lists.keys()}  # To store sequences of each list
-
-    for number in numbers:
-        found = False
-        for list_name, list_numbers in lists.items():
-            if number in list_numbers:
-                if current_list == list_name:
-                    current_count += 1
-                else:
-                    if current_list is not None:
-                        sequences[current_list].append(current_count)
-                    current_list = list_name
-                    current_count = 1
-                found = True
-                break
-        if not found and current_list is not None:
-            sequences[current_list].append(current_count)
-            current_list = None
-            current_count = 0
-
-    # Append the last sequence if it ended right at the end of the loop
-    if current_count > 0:
-        sequences[current_list].append(current_count)
-
-    # Compute statistics for each list
-    stats = {}
-    for list_name, seqs in sequences.items():
-        if seqs:
-            total_series = len(seqs) - 1 if len(seqs) > 1 else 0
-            avg_length = sum(seqs) / len(seqs)
-        else:
-            total_series = 0
-            avg_length = 0
-        stats[list_name] = {
-            "sequences": seqs,
-            "total_series_after_first": total_series,
-            "average_series_length": avg_length
-        }
-
-    return stats
-
-def count_numbers_by_list(file_path, lists):
-    """Count occurrences of numbers from each predefined list in the file."""
-    df = pd.read_csv(file_path)
-    counts = {name: 0 for name in lists.keys()}
-    for num in df['Number']:
-        for list_name, numbers in lists.items():
-            if num in numbers:
-                counts[list_name] += 1
-    return counts
-
 def app():
     st.title('Analysis of Number Sequences')
 
@@ -105,8 +49,7 @@ def app():
                 idx = row * 6 + i
                 if idx < 37:  # We only have numbers 0-36
                     with cols[i]:
-                        selected = st.checkbox(f"{idx}", key=f"num_{idx}")
-                        if selected:
+                        if st.checkbox(f"{idx}", key=f"num_{idx}"):
                             number_selections.append(idx)
         if st.button("Add New List"):
             if new_list_name and number_selections:
@@ -114,7 +57,6 @@ def app():
                 save_lists(lists)
                 st.success(f"List '{new_list_name}' added successfully.")
 
-        # Interface to delete a list
         delete_list_name = st.selectbox("Select a list to delete:", list(lists.keys()))
         if st.button("Delete List"):
             if delete_list_name in lists:
@@ -135,43 +77,39 @@ def app():
     selected_file = st.selectbox('Or select an existing CSV file:', existing_files)
 
     # User selects which lists to combine
-    list_selection = st.multiselect("Select number lists to combine or analyze separately:", list(lists.keys()), default=list(lists.keys()))
-    merge_option = st.checkbox("Merge selected lists for combined analysis")
+    list_selection = st.multiselect("Select number lists to analyze:", list(lists.keys()))
 
-    if st.button('Show Analysis') and selected_file:
+    if st.button('Submit List Selection'):
+        # Store the selected lists in session state
+        st.session_state.selected_lists = list_selection
+        st.session_state.merge_option = None  # Reset the merge option
+        if list_selection:
+            # Show merge option only after selection
+            st.session_state.merge_option = st.checkbox("Merge selected lists for combined analysis")
+
+    if 'merge_option' in st.session_state and st.session_state.merge_option is not None:
         # Perform analysis based on merge option
-        if merge_option:
+        if st.session_state.merge_option:
             # Merge selected lists into one for analysis
-            merged_numbers = {num for lst in list_selection for num in lists[lst]}
+            merged_numbers = {num for lst in st.session_state.selected_lists for num in lists[lst]}
             selected_lists = {'Combined List': list(merged_numbers)}
         else:
-            selected_lists = {name: lists[name] for name in list_selection}
+            selected_lists = {name: lists[name] for name in st.session_state.selected_lists}
 
-        # Count numbers and analyze sequences
-        counts = count_numbers_by_list(selected_file, selected_lists)
-        data = pd.DataFrame({
-            "List": list(selected_lists.keys()),
-            "Count": [counts[name] for name in selected_lists]
-        })
+        if st.button('Show Analysis') and selected_file:
+            # Count numbers and analyze sequences
+            counts = count_numbers_by_list(selected_file, selected_lists)
+            data = pd.DataFrame({
+                "List": list(selected_lists.keys()),
+                "Count": [counts[name] for name in selected_lists]
+            })
 
-        # Create a stacked bar chart using Plotly
-        data_pivot = data.melt(id_vars=["List"], value_vars=["Count"])
-        fig = px.bar(data_pivot, x='variable', y='value', color='List', title="Number Distribution Across Lists",
-                     barmode='stack', color_discrete_sequence=px.colors.qualitative.Set1)
-        fig.update_layout(yaxis_title="Total Counts", xaxis_title="Lists")
-        st.plotly_chart(fig)
-
-        # Analyze continuous sequences
-        results = analyze_continuous_sequences(selected_file, selected_lists)
-        for list_name, stats in results.items():
-            st.subheader(f"List: {list_name}")
-            with st.expander("Show sequences"):
-                st.write("Sequences:", stats['sequences'])
-            st.write("Total series after first occurrence:", stats['total_series_after_first'])
-            st.write("Average series length:", stats['average_series_length'])
-            st.write(pd.DataFrame({
-                "Sequence Length": stats['sequences']
-            }).transpose())
+            # Create a stacked bar chart using Plotly
+            data_pivot = data.melt(id_vars=["List"], value_vars=["Count"])
+            fig = px.bar(data_pivot, x='variable', y='value', color='List', title="Number Distribution Across Lists",
+                         barmode='stack', color_discrete_sequence=px.colors.qualitative.Set1)
+            fig.update_layout(yaxis_title="Total Counts", xaxis_title="Lists")
+            st.plotly_chart(fig)
 
 if __name__ == "__main__":
     app()

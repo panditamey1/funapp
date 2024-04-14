@@ -4,6 +4,9 @@ import os
 import os
 import glob
 
+import plotly.express as px
+import os
+
 csv_directory = 'csv_files'
 
 # Ensure the directory for CSV files exists
@@ -13,7 +16,6 @@ if not os.path.exists(csv_directory):
 def get_csv_files():
     """Returns a list of csv files from the csv_directory."""
     return glob.glob(os.path.join(csv_directory, '*.csv'))
-
 
 def count_numbers_by_list(file_path, lists):
     """Count occurrences of numbers from each predefined list in the file."""
@@ -42,16 +44,27 @@ def app():
 
     # Predefined lists
     predefined_lists = {
-        "Big": [22, 18, 29, 7, 28, 12, 35, 3, 26, 0, 32, 15, 19, 4, 21, 2, 25],
-        "Orpha": [1, 20, 14, 31, 9, 17, 34, 6],
-        "Small": [27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33]
+        "List 1": [22, 18, 29, 7, 28, 12, 35, 3, 26, 0, 32, 15, 19, 4, 21, 2, 25],
+        "List 2": [1, 20, 14, 31, 9, 17, 34, 6],
+        "List 3": [27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33]
     }
 
     if st.button('Show Analysis') and selected_file:
         # Perform analysis
         counts = count_numbers_by_list(selected_file, predefined_lists)
-        # Display results as a bar chart
-        st.bar_chart(counts)
+        data = pd.DataFrame({
+            "List": counts.keys(),
+            "Count": counts.values()
+        })
+
+        # Create a bar chart using Plotly
+        fig = px.bar(data, x='List', y='Count', title="Number Distribution Across Lists",
+                     color='List', color_discrete_sequence=px.colors.qualitative.Set1)
+        fig.update_layout(yaxis_title="Total Counts", xaxis_title="Lists")
+
+        # Display the figure
+        st.plotly_chart(fig)
 
 if __name__ == "__main__":
     app()
+

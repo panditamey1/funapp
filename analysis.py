@@ -141,11 +141,11 @@ def app():
                 save_lists(lists)
                 st.success(f"List '{new_list_name}' updated successfully.")
 
-            delete_list_name = st.selectbox("Select a list to delete:", list(lists.keys()))
-            if delete_list_name in lists:
-                del lists[delete_list_name]
-                save_lists(lists)
-                st.success(f"List '{delete_list_name}' deleted successfully.")
+        delete_list_name = st.selectbox("Select a list to delete:", list(lists.keys()))
+        if delete_list_name in lists:
+            del lists[delete_list_name]
+            save_lists(lists)
+            st.success(f"List '{delete_list_name}' deleted successfully.")
 
     # File upload functionality
     uploaded_file = st.file_uploader("Upload a CSV file for analysis", type=['csv'])

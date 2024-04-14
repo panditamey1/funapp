@@ -14,6 +14,52 @@ def get_csv_files():
     """Returns a list of csv files from the csv_directory."""
     return glob.glob(os.path.join(csv_directory, '*.csv'))
 
+def analyze_continuous_sequences(file_path, lists):
+    df = pd.read_csv(file_path)
+    numbers = df['Number']
+    current_list = None
+    current_count = 0
+    sequences = {name: [] for name in lists.keys()}  # To store sequences of each list
+
+    for number in numbers:
+        found = False
+        for list_name, list_numbers in lists.items():
+            if number in list_numbers:
+                if current_list == list_name:
+                    current_count += 1
+                else:
+                    if current_list is not None:
+                        sequences[current_list].append(current_count)
+                    current_list = list_name
+                    current_count = 1
+                found = True
+                break
+        if not found and current_list is not None:
+            sequences[current_list].append(current_count)
+            current_list = None
+            current_count = 0
+
+    # Append the last sequence if it ended right at the end of the loop
+    if current_count > 0:
+        sequences[current_list].append(current_count)
+
+    # Compute statistics for each list
+    stats = {}
+    for list_name, seqs in sequences.items():
+        if seqs:
+            total_series = len(seqs) - 1 if len(seqs) > 1 else 0
+            avg_length = sum(seqs) / len(seqs)
+        else:
+            total_series = 0
+            avg_length = 0
+        stats[list_name] = {
+            "sequences": seqs,
+            "total_series_after_first": total_series,
+            "average_series_length": avg_length
+        }
+
+    return stats
+
 def count_numbers_by_list(file_path, lists):
     """Count occurrences of numbers from each predefined list in the file."""
     df = pd.read_csv(file_path)
@@ -64,6 +110,14 @@ def app():
 
         # Display the figure
         st.plotly_chart(fig)
-
+        result = analyze_continuous_sequences(file_path, predefined_lists)
+        for list_name, stats in results.items():
+            st.subheader(f"List: {list_name}")
+            st.write("Sequences:", stats['sequences'])
+            st.write("Total series after first occurrence:", stats['total_series_after_first'])
+            st.write("Average series length:", stats['average_series_length'])
+            st.write(pd.DataFrame({
+                "Sequence Length": stats['sequences']
+            }).transpose())
 if __name__ == "__main__":
     app()

@@ -327,20 +327,20 @@ def app():
 
                 with st.expander("Show actual sequences"):
                     st.write("actual_sequences:", stats['actual_sequences'])                    
-                    st.write("Total series after first occurrence:", stats['total_series_after_first'])
-                    st.write("Average series length:", stats['average_series_length'])
-                    st.write("Consecutive Doubles:", stats['consecutive_doubles'])
-                    st.write("Failed Doubles:", stats['failed_doubles'])
-                    st.write("Consecutive Triples:", stats['consecutive_triples'])
-                    st.write("Failed Triples:", stats['failed_triples'])
+                st.write("Total series after first occurrence:", stats['total_series_after_first'])
+                st.write("Average series length:", stats['average_series_length'])
+                st.write("Consecutive Doubles:", stats['consecutive_doubles'])
+                st.write("Failed Doubles:", stats['failed_doubles'])
+                st.write("Consecutive Triples:", stats['consecutive_triples'])
+                st.write("Failed Triples:", stats['failed_triples'])
 
-                    # Visualization of counts
-                    data = pd.DataFrame({
-                        "Metric": ["Consecutive Doubles", "Failed Doubles", "Consecutive Triples", "Failed Triples"],
-                        "Count": [stats['consecutive_doubles'], stats['failed_doubles'], stats['consecutive_triples'], stats['failed_triples']]
-                    })
-                    fig = px.bar(data, x='Metric', y='Count', title=f"Counts for {list_name}")
-                    st.plotly_chart(fig)
+                # Visualization of counts
+                data = pd.DataFrame({
+                    "Metric": ["Consecutive Doubles", "Failed Doubles", "Consecutive Triples", "Failed Triples"],
+                    "Count": [stats['consecutive_doubles'], stats['failed_doubles'], stats['consecutive_triples'], stats['failed_triples']]
+                })
+                fig = px.bar(data, x='Metric', y='Count', title=f"Counts for {list_name}")
+                st.plotly_chart(fig)
 
 if __name__ == "__main__":
     app()

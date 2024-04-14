@@ -64,19 +64,33 @@ def analyze_and_extract_sequences(file_path, lists):
     numbers = df['Number']
     sequences = {name: [] for name in lists.keys()}  # Stores counts of sequences
     actual_sequences = {name: [] for name in lists.keys()}  # Stores actual sequences
+    consecutive_doubles = {name: 0 for name in lists.keys()}
+    failed_doubles = {name: 0 for name in lists.keys()}
+    consecutive_triples = {name: 0 for name in lists.keys()}
+    failed_triples = {name: 0 for name in lists.keys()}
     current_list = None
     current_sequence = []  # Current sequence of numbers
 
-    for number in numbers:
+    for i, number in enumerate(numbers):
         found = False
         for list_name, list_numbers in lists.items():
             if number in list_numbers:
                 if current_list == list_name:
                     current_sequence.append(number)
+                    # Count doubles and triples
+                    if len(current_sequence) == 2:
+                        consecutive_doubles[list_name] += 1
+                    elif len(current_sequence) == 3:
+                        consecutive_triples[list_name] += 1
                 else:
                     if current_list is not None:
                         sequences[current_list].append(len(current_sequence))
                         actual_sequences[current_list].append(current_sequence)
+                        # Check for failed doubles and triples
+                        if len(current_sequence) == 2:
+                            failed_doubles[current_list] += 1
+                        elif len(current_sequence) == 3:
+                            failed_triples[current_list] += 1
                     current_list = list_name
                     current_sequence = [number]
                 found = True
@@ -84,6 +98,11 @@ def analyze_and_extract_sequences(file_path, lists):
         if not found and current_list is not None:
             sequences[current_list].append(len(current_sequence))
             actual_sequences[current_list].append(current_sequence)
+            # Check for failed doubles and triples at end of sequence
+            if len(current_sequence) == 2:
+                failed_doubles[current_list] += 1
+            elif len(current_sequence) == 3:
+                failed_triples[current_list] += 1
             current_list = None
             current_sequence = []
 
@@ -95,18 +114,20 @@ def analyze_and_extract_sequences(file_path, lists):
     # Compute statistics for each list
     stats = {}
     for list_name, seqs in sequences.items():
-        if seqs:
-            total_series = len(seqs) - 1 if len(seqs) > 1 else 0
-            avg_length = sum(seqs) / len(seqs)
-        else:
-            total_series = 0
-            avg_length = 0
+        total_series = len(seqs) - 1 if len(seqs) > 1 else 0
+        avg_length = sum(seqs) / len(seqs) if seqs else 0
         stats[list_name] = {
             "sequences": seqs,
             "actual_sequences": actual_sequences[list_name],
             "total_series_after_first": total_series,
-            "average_series_length": avg_length
+            "average_series_length": avg_length,
+            "consecutive_doubles": consecutive_doubles[list_name],
+            "failed_doubles": failed_doubles[list_name],
+            "consecutive_triples": consecutive_triples[list_name],
+            "failed_triples": failed_triples[list_name]
         }
+
+    return stats, numbers.tolist()
 
     return stats, numbers.tolist()
 def analyze_continuous_sequences(file_path, lists):
@@ -306,32 +327,20 @@ def app():
 
                 with st.expander("Show actual sequences"):
                     st.write("actual_sequences:", stats['actual_sequences'])                    
-                st.write("Total series after first occurrence:", stats['total_series_after_first'])
-                st.write("Average series length:", stats['average_series_length'])
-                st.write(pd.DataFrame({
-                    "Sequence Length": stats['sequences']
-                }).transpose())
-                st.write(pd.DataFrame({
-                    "actual_sequences": stats['actual_sequences']
-                }).transpose())
-            triple_counts = count_consecutive_triples(selected_file, selected_lists)
-            st.subheader("Count of Consecutive Triples")
-            for list_name, count in triple_counts.items():
-                st.write(f"{list_name}: {count} triples")
+                    st.write("Total series after first occurrence:", stats['total_series_after_first'])
+                    st.write("Average series length:", stats['average_series_length'])
+                    st.write("Consecutive Doubles:", stats['consecutive_doubles'])
+                    st.write("Failed Doubles:", stats['failed_doubles'])
+                    st.write("Consecutive Triples:", stats['consecutive_triples'])
+                    st.write("Failed Triples:", stats['failed_triples'])
 
-            double_counts = count_consecutive_doubles(selected_file, selected_lists)
-            st.subheader("Count of Consecutive Doubles")
-            for list_name, count in double_counts.items():
-                st.write(f"{list_name}: {count} doubles")
-            double_failed_counts = failed_consecutive_doubles(selected_file, selected_lists)
-            st.subheader("Count of failed Consecutive Doubles")
-            for list_name, count in double_failed_counts.items():
-                st.write(f"{list_name}: {count} doubles")
-            
-            triple_failed_counts = failed_consecutive_triples(selected_file, selected_lists)
-            st.subheader("Count of failed Consecutive triples")
-            for list_name, count in triple_failed_counts.items():
-                st.write(f"{list_name}: {count} triples")
+                    # Visualization of counts
+                    data = pd.DataFrame({
+                        "Metric": ["Consecutive Doubles", "Failed Doubles", "Consecutive Triples", "Failed Triples"],
+                        "Count": [stats['consecutive_doubles'], stats['failed_doubles'], stats['consecutive_triples'], stats['failed_triples']]
+                    })
+                    fig = px.bar(data, x='Metric', y='Count', title=f"Counts for {list_name}")
+                    st.plotly_chart(fig)
 
 if __name__ == "__main__":
     app()

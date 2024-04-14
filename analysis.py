@@ -90,7 +90,20 @@ def count_consecutive_triples(file_path, lists):
                 triple_counts[list_name] += 1
 
     return triple_counts
+def count_consecutive_doubles(file_path, lists):
+    df = pd.read_csv(file_path)
+    numbers = df['Number']
+    double_counts = {name: 0 for name in lists.keys()}
+    
+    for list_name, list_numbers in lists.items():
+        # Convert list_numbers to a set for faster membership checking
+        list_set = set(list_numbers)
+        for i in range(len(numbers) - 1):  # Loop until the second-last element
+            # Check if two consecutive numbers are in the list
+            if numbers[i] in list_set and numbers[i+1] in list_set:
+                double_counts[list_name] += 1
 
+    return double_counts
 def count_numbers_by_list(file_path, lists):
     """Count occurrences of numbers from each predefined list in the file."""
     df = pd.read_csv(file_path)
@@ -208,5 +221,9 @@ def app():
             st.subheader("Count of Consecutive Triples")
             for list_name, count in triple_counts.items():
                 st.write(f"{list_name}: {count} triples")     
+            double_counts = count_consecutive_doubles(selected_file, selected_lists)
+            st.subheader("Count of Consecutive Doubles")
+            for list_name, count in double_counts.items():
+                st.write(f"{list_name}: {count} doubles")
 if __name__ == "__main__":
     app()

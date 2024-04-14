@@ -1,7 +1,18 @@
 import streamlit as st
 import pandas as pd
 import os
-from manage_csv import get_csv_files, csv_directory
+import os
+import glob
+
+csv_directory = 'csv_files'
+
+# Ensure the directory for CSV files exists
+if not os.path.exists(csv_directory):
+    os.makedirs(csv_directory)
+
+def get_csv_files():
+    """Returns a list of csv files from the csv_directory."""
+    return glob.glob(os.path.join(csv_directory, '*.csv'))
 
 def group_after_nongroup_analysis(file_path, numbers_list):
     """Analyzes how many times a number from the predefined list follows a number not in the list."""

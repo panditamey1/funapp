@@ -31,12 +31,13 @@ def save_lists(lists):
 def get_csv_files():
     """Returns a list of csv files from the csv_directory."""
     return glob.glob(os.path.join(csv_directory, '*.csv'))
+
 def analyze_continuous_sequences(file_path, lists):
     df = pd.read_csv(file_path)
     numbers = df['Number']
+    sequences = {name: [] for name in lists.keys()}
     current_list = None
     current_count = 0
-    sequences = {name: [] for name in lists.keys()}  # To store sequences of each list
 
     for number in numbers:
         found = False
@@ -76,36 +77,34 @@ def analyze_continuous_sequences(file_path, lists):
         }
 
     return stats
+
 def count_consecutive_triples(file_path, lists):
     df = pd.read_csv(file_path)
     numbers = df['Number']
     triple_counts = {name: 0 for name in lists.keys()}
     
     for list_name, list_numbers in lists.items():
-        # Convert list_numbers to a set for faster membership checking
         list_set = set(list_numbers)
-        for i in range(len(numbers) - 2):  # Loop until the third-last element
-            # Check if three consecutive numbers are in the list
+        for i in range(len(numbers) - 2):
             if numbers[i] in list_set and numbers[i+1] in list_set and numbers[i+2] in list_set:
                 triple_counts[list_name] += 1
 
     return triple_counts
+
 def count_consecutive_doubles(file_path, lists):
     df = pd.read_csv(file_path)
     numbers = df['Number']
     double_counts = {name: 0 for name in lists.keys()}
     
     for list_name, list_numbers in lists.items():
-        # Convert list_numbers to a set for faster membership checking
         list_set = set(list_numbers)
-        for i in range(len(numbers) - 1):  # Loop until the second-last element
-            # Check if two consecutive numbers are in the list
+        for i in range(len(numbers) - 1):
             if numbers[i] in list_set and numbers[i+1] in list_set:
                 double_counts[list_name] += 1
 
     return double_counts
+
 def count_numbers_by_list(file_path, lists):
-    """Count occurrences of numbers from each predefined list in the file."""
     df = pd.read_csv(file_path)
     counts = {name: 0 for name in lists.keys()}
     for num in df['Number']:
@@ -124,19 +123,16 @@ def app():
     with st.expander("Manage Lists"):
         st.subheader("Add New List")
         new_list_name = st.text_input("Enter new list name:")
-        
-        # Interface for selecting individual numbers
         number_selections = []
-        for row in range(7):  # Create rows of checkboxes
-            cols = st.columns(6)  # Create a row with 6 columns
+        for row in range(7):
+            cols = st.columns(6)
             for i in range(6):
                 idx = row * 6 + i
-                if idx < 37:  # We only have numbers 0-36
+                if idx < 37:
                     with cols[i]:
                         if st.checkbox(f"{idx}", key=f"num_{idx}"):
                             number_selections.append(idx)
-        
-        # Interface for specifying a range
+
         st.subheader("Or Specify a Range")
         start_range = st.number_input("Start of Range", min_value=0, max_value=36, value=0)
         end_range = st.number_input("End of Range", min_value=0, max_value=36, value=36)
@@ -147,7 +143,6 @@ def app():
                 save_lists(lists)
                 st.success(f"List '{new_list_name}' added successfully with range from {start_range} to {end_range}.")
         
-        # Button to add the list of selected numbers
         if st.button("Add Individual Numbers to List"):
             if new_list_name and number_selections:
                 lists[new_list_name] = number_selections
@@ -173,40 +168,26 @@ def app():
     existing_files = get_csv_files()
     selected_file = st.selectbox('Or select an existing CSV file:', existing_files)
 
-    # User selects which lists to combine
+    # User selects which lists to analyze
     list_selection = st.multiselect("Select number lists to analyze:", list(lists.keys()))
 
     if st.button('Submit List Selection'):
-        # Store the selected lists in session state
         st.session_state.selected_lists = list_selection
-        st.session_state.merge_option = None  # Reset the merge option
-        if list_selection:
-            # Show merge option only after selection
-            st.session_state.merge_option = st.checkbox("Merge selected lists for combined analysis")
 
-    if 'merge_option' in st.session_state and st.session_state.merge_option is not None:
-        # Perform analysis based on merge option
-        if st.session_state.merge_option:
-            # Merge selected lists into one for analysis
-            merged_numbers = {num for lst in st.session_state.selected_lists for num in lists[lst]}
-            selected_lists = {'Combined List': list(merged_numbers)}
-        else:
-            selected_lists = {name: lists[name] for name in st.session_state.selected_lists}
-
+    if 'selected_lists' in st.session_state and st.session_state.selected_lists:
+        selected_lists = {name: lists[name] for name in st.session_state.selected_lists}
         if st.button('Show Analysis') and selected_file:
-            # Count numbers and analyze sequences
             counts = count_numbers_by_list(selected_file, selected_lists)
             data = pd.DataFrame({
                 "List": list(selected_lists.keys()),
                 "Count": [counts[name] for name in selected_lists]
             })
-
-            # Create a stacked bar chart using Plotly
             data_pivot = data.melt(id_vars=["List"], value_vars=["Count"])
             fig = px.bar(data_pivot, x='variable', y='value', color='List', title="Number Distribution Across Lists",
                          barmode='stack', color_discrete_sequence=px.colors.qualitative.Set1)
             fig.update_layout(yaxis_title="Total Counts", xaxis_title="Lists")
             st.plotly_chart(fig)
+
             results = analyze_continuous_sequences(selected_file, selected_lists)
             for list_name, stats in results.items():
                 st.subheader(f"List: {list_name}")
@@ -217,13 +198,16 @@ def app():
                 st.write(pd.DataFrame({
                     "Sequence Length": stats['sequences']
                 }).transpose())
+
             triple_counts = count_consecutive_triples(selected_file, selected_lists)
             st.subheader("Count of Consecutive Triples")
             for list_name, count in triple_counts.items():
-                st.write(f"{list_name}: {count} triples")     
+                st.write(f"{list_name}: {count} triples")
+
             double_counts = count_consecutive_doubles(selected_file, selected_lists)
             st.subheader("Count of Consecutive Doubles")
             for list_name, count in double_counts.items():
                 st.write(f"{list_name}: {count} doubles")
+
 if __name__ == "__main__":
     app()

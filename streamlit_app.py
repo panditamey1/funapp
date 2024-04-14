@@ -31,30 +31,16 @@ def save_number(num, file_path):
     df = pd.concat([df, new_row], ignore_index=True)
     df.to_csv(file_path, index=False)
 
-def group_follows_analysis(file_path):
-    """Analyzes which number from the predefined list often follows any number and their counts."""
+def group_after_nongroup_analysis(file_path):
+    """Analyzes how many times a number from the predefined list follows a number not in the list."""
     df = pd.read_csv(file_path)
-    result = {}
+    counts = 0
     previous_num = None
     for num in df['Number']:
-        if previous_num is not None and previous_num not in numbers_list:
-            if num in numbers_list:
-                if previous_num in result:
-                    if num in result[previous_num]:
-                        result[previous_num][num] += 1
-                    else:
-                        result[previous_num][num] = 1
-                else:
-                    result[previous_num] = {num: 1}
+        if previous_num is not None and previous_num not in numbers_list and num in numbers_list:
+            counts += 1
         previous_num = num
-    return result
-
-def display_group_analysis(analysis):
-    """Displays the result of how often numbers from a group follow other numbers."""
-    for key, value in analysis.items():
-        st.subheader(f'Number {key} is followed by:')
-        for k, v in value.items():
-            st.text(f'Number {k} from the group: {v} times')
+    return counts
 
 # Streamlit user interface
 st.title('Number Input and Analysis')
@@ -83,24 +69,24 @@ if selected_file:
     st.write(f'You are working with: {selected_file}')
     st.download_button('Download CSV', data=pd.read_csv(selected_file).to_csv(index=False), file_name=os.path.basename(selected_file), mime='text/csv')
 
-    # Layout the numbers in three rows
-    numbers_per_row = 12
-    for i in range(0, 37, numbers_per_row):
-        cols = st.columns(numbers_per_row)
-        for j in range(numbers_per_row):
-            idx = i + j
-            if idx > 36:
-                break
-            if cols[j].button(f'{idx}', key=f'num_{idx}'):
-                st.session_state.selected_number = idx
-
-    if st.button('Submit Number'):
-        if 'selected_number' in st.session_state and st.session_state.selected_number is not None:
-            num = st.session_state.selected_number
-            save_number(num, selected_file)
-            st.success(f'Number {num} saved!')
-
     if st.button('Show Analysis'):
-        # Perform group analysis and display results
-        analysis = group_follows_analysis(selected_file)
-        display_group_analysis(analysis)
+        # Perform analysis and display results
+        count = group_after_nongroup_analysis(selected_file)
+        st.write(f'Numbers from the predefined group have occurred {count} times after numbers not in the group.')
+
+# Layout the numbers in three rows
+numbers_per_row = 12
+for i in range(0, 37, numbers_per_row):
+    cols = st.columns(numbers_per_row)
+    for j in range(numbers_per_row):
+        idx = i + j
+        if idx > 36:
+            break
+        if cols[j].button(f'{idx}', key=f'num_{idx}'):
+            st.session_state.selected_number = idx
+
+if st.button('Submit Number'):
+    if 'selected_number' in st.session_state and st.session_state.selected_number is not None:
+        num = st.session_state.selected_number
+        save_number(num, selected_file)
+        st.success(f'Number {num} saved!')

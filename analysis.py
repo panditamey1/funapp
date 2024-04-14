@@ -282,10 +282,9 @@ def app():
                 st.write(pd.DataFrame({
                     "Sequence Length": stats['sequences']
                 }).transpose())
-            for sl in selected_lists:
-                st.write(f"List: {sl}")
-                sequences = get_consecutive_sequences(selected_file, sl)
-                st.write(f"Sequences : {sequences}")
+                st.write(pd.DataFrame({
+                    "actual_sequences": stats['actual_sequences']
+                }).transpose())
             triple_counts = count_consecutive_triples(selected_file, selected_lists)
             st.subheader("Count of Consecutive Triples")
             for list_name, count in triple_counts.items():

@@ -94,14 +94,13 @@ def app():
     # Load or initialize lists
     lists = load_lists()
 
-    # Allow the user to add a new list
+    # Manage lists section
     with st.expander("Manage Lists"):
+        # Interface to add a new list
         new_list_name = st.text_input("Enter new list name:")
-
-        # Generate checkboxes for number selection from 0 to 36 in a grid format
         number_selections = []
-        for row in range(7):  # Create 4 rows of checkboxes
-            cols = st.columns(6)  # Creates a row with 10 columns
+        for row in range(7):  # Create rows of checkboxes
+            cols = st.columns(6)  # Create a row with 6 columns
             for i in range(6):
                 idx = row * 6 + i
                 if idx < 37:  # We only have numbers 0-36
@@ -109,21 +108,19 @@ def app():
                         selected = st.checkbox(f"{idx}", key=f"num_{idx}")
                         if selected:
                             number_selections.append(idx)
-
         if st.button("Add New List"):
             if new_list_name and number_selections:
                 lists[new_list_name] = number_selections
                 save_lists(lists)
                 st.success(f"List '{new_list_name}' added successfully.")
 
-        # Option to delete a list
+        # Interface to delete a list
         delete_list_name = st.selectbox("Select a list to delete:", list(lists.keys()))
         if st.button("Delete List"):
             if delete_list_name in lists:
                 del lists[delete_list_name]
                 save_lists(lists)
                 st.success(f"List '{delete_list_name}' deleted successfully.")
-
 
     # File upload functionality
     uploaded_file = st.file_uploader("Upload a CSV file for analysis", type=['csv'])
@@ -138,27 +135,33 @@ def app():
     selected_file = st.selectbox('Or select an existing CSV file:', existing_files)
 
     # User selects which lists to combine
-    list_selection = st.multiselect("Select number lists to combine:", list(lists.keys()), default=list(lists.keys()))
+    list_selection = st.multiselect("Select number lists to combine or analyze separately:", list(lists.keys()), default=list(lists.keys()))
+    merge_option = st.checkbox("Merge selected lists for combined analysis")
 
     if st.button('Show Analysis') and selected_file:
-        # Perform analysis
-        selected_lists = {name: lists[name] for name in list_selection}
+        # Perform analysis based on merge option
+        if merge_option:
+            # Merge selected lists into one for analysis
+            merged_numbers = {num for lst in list_selection for num in lists[lst]}
+            selected_lists = {'Combined List': list(merged_numbers)}
+        else:
+            selected_lists = {name: lists[name] for name in list_selection}
+
+        # Count numbers and analyze sequences
         counts = count_numbers_by_list(selected_file, selected_lists)
         data = pd.DataFrame({
-            "List": list_selection,
-            "Count": [counts[name] for name in list_selection]
+            "List": list(selected_lists.keys()),
+            "Count": [counts[name] for name in selected_lists]
         })
 
-        # Pivot the data for a stacked bar chart
-        data_pivot = data.melt(id_vars=["List"], value_vars=["Count"])
-
         # Create a stacked bar chart using Plotly
+        data_pivot = data.melt(id_vars=["List"], value_vars=["Count"])
         fig = px.bar(data_pivot, x='variable', y='value', color='List', title="Number Distribution Across Lists",
                      barmode='stack', color_discrete_sequence=px.colors.qualitative.Set1)
         fig.update_layout(yaxis_title="Total Counts", xaxis_title="Lists")
-
-        # Display the figure
         st.plotly_chart(fig)
+
+        # Analyze continuous sequences
         results = analyze_continuous_sequences(selected_file, selected_lists)
         for list_name, stats in results.items():
             st.subheader(f"List: {list_name}")

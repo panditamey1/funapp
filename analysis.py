@@ -31,6 +31,61 @@ def save_lists(lists):
 def get_csv_files():
     """Returns a list of csv files from the csv_directory."""
     return glob.glob(os.path.join(csv_directory, '*.csv'))
+def analyze_continuous_sequences(file_path, lists):
+    df = pd.read_csv(file_path)
+    numbers = df['Number']
+    current_list = None
+    current_count = 0
+    sequences = {name: [] for name in lists.keys()}  # To store sequences of each list
+
+    for number in numbers:
+        found = False
+        for list_name, list_numbers in lists.items():
+            if number in list_numbers:
+                if current_list == list_name:
+                    current_count += 1
+                else:
+                    if current_list is not None:
+                        sequences[current_list].append(current_count)
+                    current_list = list_name
+                    current_count = 1
+                found = True
+                break
+        if not found and current_list is not None:
+            sequences[current_list].append(current_count)
+            current_list = None
+            current_count = 0
+
+    # Append the last sequence if it ended right at the end of the loop
+    if current_count > 0:
+        sequences[current_list].append(current_count)
+
+    # Compute statistics for each list
+    stats = {}
+    for list_name, seqs in sequences.items():
+        if seqs:
+            total_series = len(seqs) - 1 if len(seqs) > 1 else 0
+            avg_length = sum(seqs) / len(seqs)
+        else:
+            total_series = 0
+            avg_length = 0
+        stats[list_name] = {
+            "sequences": seqs,
+            "total_series_after_first": total_series,
+            "average_series_length": avg_length
+        }
+
+    return stats
+
+def count_numbers_by_list(file_path, lists):
+    """Count occurrences of numbers from each predefined list in the file."""
+    df = pd.read_csv(file_path)
+    counts = {name: 0 for name in lists.keys()}
+    for num in df['Number']:
+        for list_name, numbers in lists.items():
+            if num in numbers:
+                counts[list_name] += 1
+    return counts
 
 def app():
     st.title('Analysis of Number Sequences')

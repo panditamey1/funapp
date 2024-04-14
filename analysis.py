@@ -189,7 +189,9 @@ def app():
             fig.update_layout(yaxis_title="Total Counts", xaxis_title="Lists")
             st.plotly_chart(fig)
 
-            results = analyze_continuous_sequences(selected_file, selected_lists)
+            results, raw_numbers = analyze_continuous_sequences(selected_file, selected_lists)
+            st.subheader("Raw Sequence of Numbers:")
+            st.write(raw_numbers)
             for list_name, stats in results.items():
                 st.subheader(f"List: {list_name}")
                 with st.expander("Show sequences"):

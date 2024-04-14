@@ -99,6 +99,12 @@ def app():
             st.subheader("Add New List")
             new_list_name = st.text_input("Enter new list name:")
 
+            # Check if we need to reset checkboxes
+            if 'clear' in st.session_state and st.session_state.clear:
+                for i in range(37):
+                    st.session_state[f"num_{i}"] = False
+                st.session_state.clear = False  # Reset clear flag
+
             # Interface for selecting individual numbers
             number_selections = []
             for row in range(7):  # Create rows of checkboxes
@@ -108,7 +114,7 @@ def app():
                     if idx < 37:  # We only have numbers 0-36
                         with cols[i]:
                             # Use a dynamic key for each checkbox
-                            checked = st.checkbox(f"{idx}", key=f"num_{idx}")
+                            checked = st.checkbox(f"{idx}", key=f"num_{idx}", value=st.session_state.get(f"num_{idx}", False))
                             if checked:
                                 number_selections.append(idx)
 
@@ -117,37 +123,30 @@ def app():
             start_range = st.number_input("Start of Range", min_value=0, max_value=36, value=0)
             end_range = st.number_input("End of Range", min_value=0, max_value=36, value=36)
             
-            # Add and delete list operations
-            add_range_button = st.form_submit_button("Add Range to List")
-            add_numbers_button = st.form_submit_button("Add Individual Numbers to List")
-            delete_list_name = st.selectbox("Select a list to delete:", list(lists.keys()))
-            delete_list_button = st.form_submit_button("Delete List")
+            # Add, delete, and clear buttons
+            submit_action = st.form_submit_button("Submit")
             clear_selections_button = st.form_submit_button("Clear Selections")
 
-        # Processing form submission
-        if add_range_button:
-            if new_list_name and start_range <= end_range:
-                lists[new_list_name] = list(range(start_range, end_range + 1))
+        # Clear selections if requested
+        if clear_selections_button:
+            st.session_state.clear = True
+            st.experimental_rerun()
+
+        if submit_action:
+            if new_list_name:
+                if start_range <= end_range:
+                    lists[new_list_name] = list(range(start_range, end_range + 1))
+                if number_selections:
+                    lists[new_list_name].extend(number_selections)
                 save_lists(lists)
-                st.success(f"List '{new_list_name}' added successfully with range from {start_range} to {end_range}.")
-                
-        if add_numbers_button:
-            if new_list_name and number_selections:
-                lists[new_list_name] = number_selections
-                save_lists(lists)
-                st.success(f"List '{new_list_name}' added successfully with selected numbers.")
-        
-        if delete_list_button:
+                st.success(f"List '{new_list_name}' updated successfully.")
+
+            delete_list_name = st.selectbox("Select a list to delete:", list(lists.keys()))
             if delete_list_name in lists:
                 del lists[delete_list_name]
                 save_lists(lists)
                 st.success(f"List '{delete_list_name}' deleted successfully.")
-        
-        if clear_selections_button:
-            # Clear all checkbox states by refreshing the page or resetting relevant states
-            for i in range(37):
-                st.session_state[f"num_{i}"] = False
-            st.experimental_rerun()
+
     # File upload functionality
     uploaded_file = st.file_uploader("Upload a CSV file for analysis", type=['csv'])
     if uploaded_file is not None:

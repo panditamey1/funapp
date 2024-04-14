@@ -231,7 +231,7 @@ def app():
                 }).transpose())
             for sl in selected_lists:
                 st.write(f"List: {sl}")
-                sequences = get_consecutive_sequences(file_path, predefined_list_1)
+                sequences = get_consecutive_sequences(selected_file, sl)
                 st.write(f"Sequences : {sequences}")
             triple_counts = count_consecutive_triples(selected_file, selected_lists)
             st.subheader("Count of Consecutive Triples")

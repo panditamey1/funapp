@@ -273,7 +273,7 @@ def app():
                 st.subheader(f"List: {list_name}")
                 with st.expander("Show sequences"):
                     st.write("Sequences:", stats['sequences'])
-                    actual_sequences
+                    
 
                 with st.expander("Show actual sequences"):
                     st.write("actual_sequences:", stats['actual_sequences'])                    

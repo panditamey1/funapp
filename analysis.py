@@ -165,6 +165,15 @@ def app():
                          barmode='stack', color_discrete_sequence=px.colors.qualitative.Set1)
             fig.update_layout(yaxis_title="Total Counts", xaxis_title="Lists")
             st.plotly_chart(fig)
-
+            results = analyze_continuous_sequences(selected_file, selected_lists)
+            for list_name, stats in results.items():
+                st.subheader(f"List: {list_name}")
+                with st.expander("Show sequences"):
+                    st.write("Sequences:", stats['sequences'])
+                st.write("Total series after first occurrence:", stats['total_series_after_first'])
+                st.write("Average series length:", stats['average_series_length'])
+                st.write(pd.DataFrame({
+                    "Sequence Length": stats['sequences']
+                }).transpose())
 if __name__ == "__main__":
     app()

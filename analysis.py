@@ -100,10 +100,10 @@ def app():
 
         # Generate checkboxes for number selection from 0 to 36 in a grid format
         number_selections = []
-        for row in range(4):  # Create 4 rows of checkboxes
-            cols = st.columns(10)  # Creates a row with 10 columns
-            for i in range(10):
-                idx = row * 10 + i
+        for row in range(6):  # Create 4 rows of checkboxes
+            cols = st.columns(6)  # Creates a row with 10 columns
+            for i in range(6):
+                idx = row * 6 + i
                 if idx < 37:  # We only have numbers 0-36
                     with cols[i]:
                         selected = st.checkbox(f"{idx}", key=f"num_{idx}")

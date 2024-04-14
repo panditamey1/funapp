@@ -329,7 +329,7 @@ def app():
 
                 with st.expander("Show actual sequences"):
                     st.write("actual_sequences:", stats['actual_sequences'])                    
-                st.write("Total series after first occurrence:", stats['total_series_after_first'])
+                #st.write("Total series after first occurrence:", stats['total_series_after_first'])
                 st.write("Average series length:", stats['average_series_length'])
                 st.write("Consecutive Doubles:", stats['consecutive_doubles'])
                 st.write("Failed Doubles:", stats['failed_doubles'])

@@ -97,14 +97,22 @@ def app():
     # Allow the user to add a new list
     with st.expander("Manage Lists"):
         new_list_name = st.text_input("Enter new list name:")
-        
-        # Generate checkboxes for number selection from 0 to 36
-        number_grid = {i: st.checkbox(f"{i}", key=f"num_{i}") for i in range(37)}
-        selected_numbers = [num for num, checked in number_grid.items() if checked]
+
+        # Generate checkboxes for number selection from 0 to 36 in a grid format
+        number_selections = []
+        for row in range(4):  # Create 4 rows of checkboxes
+            cols = st.columns(10)  # Creates a row with 10 columns
+            for i in range(10):
+                idx = row * 10 + i
+                if idx < 37:  # We only have numbers 0-36
+                    with cols[i]:
+                        selected = st.checkbox(f"{idx}", key=f"num_{idx}")
+                        if selected:
+                            number_selections.append(idx)
 
         if st.button("Add New List"):
-            if new_list_name and selected_numbers:
-                lists[new_list_name] = selected_numbers
+            if new_list_name and number_selections:
+                lists[new_list_name] = number_selections
                 save_lists(lists)
                 st.success(f"List '{new_list_name}' added successfully.")
 

@@ -76,6 +76,20 @@ def analyze_continuous_sequences(file_path, lists):
         }
 
     return stats
+def count_consecutive_triples(file_path, lists):
+    df = pd.read_csv(file_path)
+    numbers = df['Number']
+    triple_counts = {name: 0 for name in lists.keys()}
+    
+    for list_name, list_numbers in lists.items():
+        # Convert list_numbers to a set for faster membership checking
+        list_set = set(list_numbers)
+        for i in range(len(numbers) - 2):  # Loop until the third-last element
+            # Check if three consecutive numbers are in the list
+            if numbers[i] in list_set and numbers[i+1] in list_set and numbers[i+2] in list_set:
+                triple_counts[list_name] += 1
+
+    return triple_counts
 
 def count_numbers_by_list(file_path, lists):
     """Count occurrences of numbers from each predefined list in the file."""
@@ -190,5 +204,9 @@ def app():
                 st.write(pd.DataFrame({
                     "Sequence Length": stats['sequences']
                 }).transpose())
+            triple_counts = count_consecutive_triples(selected_file, selected_lists)
+            st.subheader("Count of Consecutive Triples")
+            for list_name, count in triple_counts.items():
+                st.write(f"{list_name}: {count} triples")     
 if __name__ == "__main__":
     app()

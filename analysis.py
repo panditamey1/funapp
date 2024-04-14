@@ -325,12 +325,12 @@ def app():
                 st.write(f"{list_name}: {count} doubles")
             double_failed_counts = failed_consecutive_doubles(selected_file, selected_lists)
             st.subheader("Count of failed Consecutive Doubles")
-            for list_name, count in double_counts.items():
+            for list_name, count in double_failed_counts.items():
                 st.write(f"{list_name}: {count} doubles")
             
-            double_failed_counts = failed_consecutive_triples(selected_file, selected_lists)
+            triple_failed_counts = failed_consecutive_triples(selected_file, selected_lists)
             st.subheader("Count of failed Consecutive triples")
-            for list_name, count in double_counts.items():
+            for list_name, count in triple_failed_counts.items():
                 st.write(f"{list_name}: {count} triples")
 
 if __name__ == "__main__":

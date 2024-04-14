@@ -110,7 +110,7 @@ def app():
 
         # Display the figure
         st.plotly_chart(fig)
-        result = analyze_continuous_sequences(file_path, predefined_lists)
+        result = analyze_continuous_sequences(selected_file, predefined_lists)
         for list_name, stats in results.items():
             st.subheader(f"List: {list_name}")
             st.write("Sequences:", stats['sequences'])

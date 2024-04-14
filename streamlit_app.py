@@ -59,6 +59,14 @@ def display_group_analysis(analysis):
 # Streamlit user interface
 st.title('Number Input and Analysis')
 
+# File upload functionality
+uploaded_file = st.file_uploader("Choose a file")
+if uploaded_file is not None:
+    file_path = os.path.join(csv_directory, uploaded_file.name)
+    with open(file_path, "wb") as f:
+        f.write(uploaded_file.getbuffer())
+    st.success('File uploaded successfully.')
+
 # Creating or selecting a CSV file
 new_file = st.text_input('Create a new CSV file (enter file name):')
 create_button = st.button('Create')
@@ -70,9 +78,10 @@ if create_button and new_file:
     st.success(f'Created new file: {file_path}')
     selected_file = file_path
 
-# If a file is selected or created, show the UI for number selection
+# File download link
 if selected_file:
     st.write(f'You are working with: {selected_file}')
+    st.download_button('Download CSV', data=pd.read_csv(selected_file).to_csv(index=False), file_name=os.path.basename(selected_file), mime='text/csv')
 
     # Layout the numbers in three rows
     numbers_per_row = 12

@@ -126,7 +126,8 @@ def app():
             # Add, delete, and clear buttons
             submit_action = st.form_submit_button("Submit")
             clear_selections_button = st.form_submit_button("Clear Selections")
-
+            delete_list_name = st.selectbox("Select a list to delete:", list(lists.keys()))
+            delete_list_button = st.form_submit_button("Delete List")
         # Clear selections if requested
         if clear_selections_button:
             st.session_state.clear = True
@@ -141,11 +142,11 @@ def app():
                 save_lists(lists)
                 st.success(f"List '{new_list_name}' updated successfully.")
 
-        delete_list_name = st.selectbox("Select a list to delete:", list(lists.keys()))
-        if delete_list_name in lists:
-            del lists[delete_list_name]
-            save_lists(lists)
-            st.success(f"List '{delete_list_name}' deleted successfully.")
+        if delete_list_button:
+            if delete_list_name in lists:
+                del lists[delete_list_name]
+                save_lists(lists)
+                st.success(f"List '{delete_list_name}' deleted successfully.")
 
     # File upload functionality
     uploaded_file = st.file_uploader("Upload a CSV file for analysis", type=['csv'])

@@ -168,6 +168,35 @@ def count_consecutive_triples(file_path, lists):
                 triple_counts[list_name] += 1
 
     return triple_counts
+def failed_consecutive_doubles(file_path, lists):
+    df = pd.read_csv(file_path)
+    numbers = df['Number']
+    failed_double_counts = {name: 0 for name in lists.keys()}
+
+    for list_name, list_numbers in lists.items():
+        list_set = set(list_numbers)
+        for i in range(len(numbers) - 1):
+            # Check if the first number is in the list but the next one is not
+            if numbers[i] in list_set and numbers[i+1] not in list_set:
+                failed_double_counts[list_name] += 1
+
+    return failed_double_counts
+
+def failed_consecutive_triples(file_path, lists):
+    df = pd.read_csv(file_path)
+    numbers = df['Number']
+    failed_triple_counts = {name: 0 for name in lists.keys()}
+
+    for list_name, list_numbers in lists.items():
+        list_set = set(list_numbers)
+        for i in range(len(numbers) - 2):
+            # Check various conditions where two out of three consecutive numbers are in the list but one is not
+            if (numbers[i] in list_set and numbers[i+1] in list_set and numbers[i+2] not in list_set) or \
+               (numbers[i] in list_set and numbers[i+1] not in list_set and numbers[i+2] in list_set) or \
+               (numbers[i] not in list_set and numbers[i+1] in list_set and numbers[i+2] in list_set):
+                failed_triple_counts[list_name] += 1
+
+    return failed_triple_counts
 
 def count_consecutive_doubles(file_path, lists):
     df = pd.read_csv(file_path)
@@ -294,6 +323,15 @@ def app():
             st.subheader("Count of Consecutive Doubles")
             for list_name, count in double_counts.items():
                 st.write(f"{list_name}: {count} doubles")
+            double_failed_counts = failed_consecutive_doubles(selected_file, selected_lists)
+            st.subheader("Count of failed Consecutive Doubles")
+            for list_name, count in double_counts.items():
+                st.write(f"{list_name}: {count} doubles")
+            
+            double_failed_counts = failed_consecutive_triples(selected_file, selected_lists)
+            st.subheader("Count of failed Consecutive triples")
+            for list_name, count in double_counts.items():
+                st.write(f"{list_name}: {count} triples")
 
 if __name__ == "__main__":
     app()

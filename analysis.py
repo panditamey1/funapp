@@ -97,7 +97,11 @@ def app():
     with st.expander("Manage Lists"):
         st.subheader("Add New List")
         new_list_name = st.text_input("Enter new list name:")
-        
+
+        # Initialize or clear checkbox states in session state
+        if 'checkbox_states' not in st.session_state or st.button("Clear Selections"):
+            st.session_state.checkbox_states = {f"num_{i}": False for i in range(37)}
+
         # Interface for selecting individual numbers
         number_selections = []
         for row in range(7):  # Create rows of checkboxes
@@ -106,20 +110,22 @@ def app():
                 idx = row * 6 + i
                 if idx < 37:  # We only have numbers 0-36
                     with cols[i]:
-                        if st.checkbox(f"{idx}", key=f"num_{idx}"):
+                        checked = st.checkbox(f"{idx}", key=f"num_{idx}", value=st.session_state.checkbox_states[f"num_{idx}"])
+                        st.session_state.checkbox_states[f"num_{idx}"] = checked
+                        if checked:
                             number_selections.append(idx)
-        
+
         # Interface for specifying a range
         st.subheader("Or Specify a Range")
         start_range = st.number_input("Start of Range", min_value=0, max_value=36, value=0)
         end_range = st.number_input("End of Range", min_value=0, max_value=36, value=36)
-        
+
         if st.button("Add Range to List"):
             if new_list_name and start_range <= end_range:
                 lists[new_list_name] = list(range(start_range, end_range + 1))
                 save_lists(lists)
                 st.success(f"List '{new_list_name}' added successfully with range from {start_range} to {end_range}.")
-        
+
         # Button to add the list of selected numbers
         if st.button("Add Individual Numbers to List"):
             if new_list_name and number_selections:
@@ -133,7 +139,6 @@ def app():
                 del lists[delete_list_name]
                 save_lists(lists)
                 st.success(f"List '{delete_list_name}' deleted successfully.")
-
     # File upload functionality
     uploaded_file = st.file_uploader("Upload a CSV file for analysis", type=['csv'])
     if uploaded_file is not None:

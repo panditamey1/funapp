@@ -92,12 +92,29 @@ def app():
         "Small": [27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33]
     }
 
+    # User selects which lists to combine
+    list_selection = st.multiselect("Select number lists to combine:", list(predefined_lists.keys()), default=list(predefined_lists.keys()))
+
+    # Create new list combinations based on selection
+    combined_lists = {}
+    if list_selection:
+        # Combine selected lists
+        combined_list_numbers = []
+        for lst in list_selection:
+            combined_list_numbers.extend(predefined_lists[lst])
+        combined_lists[" + ".join(list_selection)] = combined_list_numbers
+
+        # Add unselected lists
+        for key in predefined_lists:
+            if key not in list_selection:
+                combined_lists[key] = predefined_lists[key]
+
     if st.button('Show Analysis') and selected_file:
         # Perform analysis
-        counts = count_numbers_by_list(selected_file, predefined_lists)
+        counts = count_numbers_by_list(selected_file, combined_lists)
         data = pd.DataFrame({
-            "List": ["Big", "Orph", "Small"],
-            "Count": [counts["Big"], counts["Orph"], counts["Small"]]
+            "List": list(combined_lists.keys()),
+            "Count": [counts[name] for name in combined_lists]
         })
 
         # Pivot the data for a stacked bar chart
@@ -110,7 +127,7 @@ def app():
 
         # Display the figure
         st.plotly_chart(fig)
-        results = analyze_continuous_sequences(selected_file, predefined_lists)
+        results = analyze_continuous_sequences(selected_file, combined_lists)
         for list_name, stats in results.items():
             st.subheader(f"List: {list_name}")
             with st.expander("show sequences"):
@@ -120,5 +137,6 @@ def app():
             st.write(pd.DataFrame({
                 "Sequence Length": stats['sequences']
             }).transpose())
+
 if __name__ == "__main__":
     app()

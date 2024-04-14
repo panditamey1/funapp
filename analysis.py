@@ -95,8 +95,10 @@ def app():
 
     # Manage lists section
     with st.expander("Manage Lists"):
-        # Interface to add a new list
+        st.subheader("Add New List")
         new_list_name = st.text_input("Enter new list name:")
+        
+        # Interface for selecting individual numbers
         number_selections = []
         for row in range(7):  # Create rows of checkboxes
             cols = st.columns(6)  # Create a row with 6 columns
@@ -106,11 +108,24 @@ def app():
                     with cols[i]:
                         if st.checkbox(f"{idx}", key=f"num_{idx}"):
                             number_selections.append(idx)
-        if st.button("Add New List"):
+        
+        # Interface for specifying a range
+        st.subheader("Or Specify a Range")
+        start_range = st.number_input("Start of Range", min_value=0, max_value=36, value=0)
+        end_range = st.number_input("End of Range", min_value=0, max_value=36, value=36)
+        
+        if st.button("Add Range to List"):
+            if new_list_name and start_range <= end_range:
+                lists[new_list_name] = list(range(start_range, end_range + 1))
+                save_lists(lists)
+                st.success(f"List '{new_list_name}' added successfully with range from {start_range} to {end_range}.")
+        
+        # Button to add the list of selected numbers
+        if st.button("Add Individual Numbers to List"):
             if new_list_name and number_selections:
                 lists[new_list_name] = number_selections
                 save_lists(lists)
-                st.success(f"List '{new_list_name}' added successfully.")
+                st.success(f"List '{new_list_name}' added successfully with selected numbers.")
 
         delete_list_name = st.selectbox("Select a list to delete:", list(lists.keys()))
         if st.button("Delete List"):

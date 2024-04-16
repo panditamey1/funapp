@@ -41,7 +41,7 @@ st.title("Martingale Calculator")
 
 initial_balance = st.number_input("Initial Balance", min_value=0.0, value=100.0, step=10.0)
 risk = st.number_input("Risk per Play", min_value=0.0, value=10.0, step=0.01)
-risk_to_reward = st.number_input("Risk to Reward Ratio", min_value=10.0, value=10.0, step=10.0)
+risk_to_reward = st.number_input("Risk to Reward Ratio", min_value=0.1, value=0.5, step=0.1)
 target = st.number_input("Target Balance", min_value=0.0, value=200.0, step=1.0)
 
 if st.button("Calculate"):

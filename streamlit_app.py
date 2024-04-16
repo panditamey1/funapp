@@ -62,12 +62,7 @@ def app():
     if selected_file:
         st.write(f'You are working with: {selected_file}')
         df = pd.read_csv(selected_file)
-        if not df.empty:
-            st.write('Last 5 numbers:', df['Number'].tail(5))
-            if st.button('Delete Last Number'):
-                delete_last_number(selected_file)
-                st.success('Last number deleted successfully.')
-        
+
         # Layout the numbers in three rows
         numbers_per_row = 12
         for i in range(0, 37, numbers_per_row):
@@ -84,7 +79,12 @@ def app():
                 num = st.session_state.selected_number
                 save_number(num, selected_file)
                 st.success(f'Number {num} saved!')
-
+        if not df.empty:
+            st.write('Last 5 numbers:', df['Number'].tail(5))
+            if st.button('Delete Last Number'):
+                delete_last_number(selected_file)
+                st.success('Last number deleted successfully.')
+        
     # File download link
     if selected_file:
         st.download_button('Download CSV', data=pd.read_csv(selected_file).to_csv(index=False), file_name=os.path.basename(selected_file), mime='text/csv')

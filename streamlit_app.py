@@ -51,7 +51,7 @@ def app():
     new_file = st.text_input('Create a new CSV file (enter file name):')
     create_button = st.button('Create')
     existing_files = get_csv_files()
-    selected_file = st.selectbox('Or select an existing CSV file:', existing_files)
+    selected_file = st.selectbox('Or select an existing CSV CSV file:', existing_files)
 
     if create_button and new_file:
         file_path = create_new_csv(new_file)
@@ -72,19 +72,15 @@ def app():
                 if idx > 36:
                     break
                 if cols[j].button(f'{idx}', key=f'num_{idx}'):
-                    st.session_state.selected_number = idx
+                    save_number(idx, selected_file)
+                    st.success(f'Number {idx} saved!')
 
-        if st.button('Submit Number'):
-            if 'selected_number' in st.session_state and st.session_state.selected_number is not None:
-                num = st.session_state.selected_number
-                save_number(num, selected_file)
-                st.success(f'Number {num} saved!')
         if not df.empty:
             st.write('Last 5 numbers:', df['Number'].tail(5))
             if st.button('Delete Last Number'):
                 delete_last_number(selected_file)
                 st.success('Last number deleted successfully.')
-        
+
     # File download link
     if selected_file:
         st.download_button('Download CSV', data=pd.read_csv(selected_file).to_csv(index=False), file_name=os.path.basename(selected_file), mime='text/csv')

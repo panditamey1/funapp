@@ -1,56 +1,55 @@
 import streamlit as st
 
-def calculate_martingale_rounds(initial_balance, risk, risk_to_reward, target):
-    balance = initial_balance
-    base_bet = risk
-    rounds = 0
-    steps = []
+def martingale_strategy(balance, risk, risk_to_reward, target):
+    """
+    Calculates the Martingale strategy based on the given parameters.
 
-    while balance < target and balance >= base_bet:
-        round_details = {
-            "Round": rounds + 1,
-            "Starting Balance": balance,
-            "Bet Placed": base_bet
-        }
+    Parameters:
+    balance (float): The initial balance.
+    risk (float): The risk percentage per bet.
+    risk_to_reward (float): The risk-to-reward ratio.
+    target (float): The target profit.
 
-        # Check if next bet can be placed
-        if balance >= base_bet:
-            balance -= base_bet  # Place the bet
-            win = rounds % 2 == 0  # Simulating a loss every second round for simplicity
-            if not win:
-                # Loss: double the bet
-                round_details["Outcome"] = "Loss"
-                round_details["Ending Balance"] = balance
-                base_bet *= 2
-            else:
-                # Win: reset bet and add winnings
-                winnings = base_bet * risk_to_reward
-                balance += winnings
-                round_details["Outcome"] = "Win"
-                round_details["Winnings"] = winnings
-                round_details["Ending Balance"] = balance
-                base_bet = risk
+    Returns:
+    list: The list of intermediate results, including the current balance, profit, and total bets.
+    """
+    profit = 0
+    bet = balance * risk
+    total_bets = 0
+    results = []
 
-        steps.append(round_details)
-        rounds += 1
+    while profit < target:
+        if bet > balance:
+            return ["Insufficient balance to continue the Martingale strategy."]
 
-    return steps, (rounds if balance >= target else -1)  # Return steps and rounds or -1 if bust
+        balance -= bet
+        if risk_to_reward > 1:
+            profit += bet * risk_to_reward
+        else:
+            profit -= bet
 
-# Streamlit UI
-st.title("Martingale Calculator")
+        bet *= 2
+        total_bets += 1
+        results.append((balance, profit, total_bets))
 
-initial_balance = st.number_input("Initial Balance", min_value=0.0, value=100.0, step=10.0)
-risk = st.number_input("Risk per Play", min_value=0.0, value=10.0, step=0.01)
-risk_to_reward = st.number_input("Risk to Reward Ratio", min_value=0.1, value=0.5, step=0.1)
-target = st.number_input("Target Balance", min_value=0.0, value=200.0, step=1.0)
+    return results
 
-if st.button("Calculate"):
-    steps, rounds = calculate_martingale_rounds(initial_balance, risk, risk_to_reward, target)
-    if rounds == -1:
-        st.write("Target not achievable with given balance and risk (bust likely).")
-    else:
-        st.write(f"Estimated number of plays needed: {rounds}")
-        st.write("Detailed Steps:")
-        for step in steps:
-            st.write(step)
+def main():
+    st.title("Martingale Strategy Calculator")
 
+    balance = st.number_input("Enter your initial balance:", min_value=1.0, step=0.01)
+    risk = st.number_input("Enter the risk percentage per bet (e.g., 0.01 for 1%):", min_value=0.01, max_value=1.0, step=0.01)
+    risk_to_reward = st.number_input("Enter the risk-to-reward ratio:", min_value=0.01, max_value=10.0, step=0.01)
+    target = st.number_input("Enter the target profit:", min_value=0.01, step=0.01)
+
+    if st.button("Calculate"):
+        results = martingale_strategy(balance, risk, risk_to_reward, target)
+        if isinstance(results[0], str):
+            st.write(results[0])
+        else:
+            st.write("Intermediate Results:")
+            for balance, profit, total_bets in results:
+                st.write(f"Balance: {balance:.2f}, Profit: {profit:.2f}, Total Bets: {total_bets}")
+
+if __name__ == "__main__":
+    main()

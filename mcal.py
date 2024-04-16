@@ -39,10 +39,10 @@ def calculate_martingale_rounds(initial_balance, risk, risk_to_reward, target):
 # Streamlit UI
 st.title("Martingale Calculator")
 
-initial_balance = st.number_input("Initial Balance", min_value=0.0, value=100.0, step=10)
+initial_balance = st.number_input("Initial Balance", min_value=0.0, value=100.0, step=10.0)
 risk = st.number_input("Risk per Play", min_value=0.0, value=10.0, step=0.01)
-risk_to_reward = st.number_input("Risk to Reward Ratio", min_value=10, value=10, step=10)
-target = st.number_input("Target Balance", min_value=0.0, value=200.0, step=1)
+risk_to_reward = st.number_input("Risk to Reward Ratio", min_value=10.0, value=10.0, step=10.0)
+target = st.number_input("Target Balance", min_value=0.0, value=200.0, step=1.0)
 
 if st.button("Calculate"):
     steps, rounds = calculate_martingale_rounds(initial_balance, risk, risk_to_reward, target)

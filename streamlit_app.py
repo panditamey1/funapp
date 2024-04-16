@@ -29,9 +29,16 @@ def save_number(num, file_path):
     df = pd.concat([df, new_row], ignore_index=True)
     df.to_csv(file_path, index=False)
 
+def delete_last_number(file_path):
+    """Deletes the last number added to the CSV."""
+    df = pd.read_csv(file_path)
+    if not df.empty:
+        df = df[:-1]  # Remove the last row
+        df.to_csv(file_path, index=False)
+
 def app():
     st.title('Manage CSV Files and Input Numbers')
-    
+
     # File upload functionality
     uploaded_file = st.file_uploader("Choose a file")
     if uploaded_file is not None:
@@ -39,22 +46,30 @@ def app():
         with open(file_path, "wb") as f:
             f.write(uploaded_file.getbuffer())
         st.success('File uploaded successfully.')
-    
+
     # Creating or selecting a CSV file
     new_file = st.text_input('Create a new CSV file (enter file name):')
     create_button = st.button('Create')
     existing_files = get_csv_files()
     selected_file = st.selectbox('Or select an existing CSV file:', existing_files)
-    
+
     if create_button and new_file:
         file_path = create_new_csv(new_file)
         st.success(f'Created new file: {file_path}')
         selected_file = file_path
-    
-    # Layout the numbers in three rows
-    numbers_per_row = 12
+
+    # Display last 5 numbers and deletion option
     if selected_file:
         st.write(f'You are working with: {selected_file}')
+        df = pd.read_csv(selected_file)
+        if not df.empty:
+            st.write('Last 5 numbers:', df['Number'].tail(5))
+            if st.button('Delete Last Number'):
+                delete_last_number(selected_file)
+                st.success('Last number deleted successfully.')
+        
+        # Layout the numbers in three rows
+        numbers_per_row = 12
         for i in range(0, 37, numbers_per_row):
             cols = st.columns(numbers_per_row)
             for j in range(numbers_per_row):

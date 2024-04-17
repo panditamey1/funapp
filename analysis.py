@@ -28,14 +28,26 @@ def cross_list_follow_count(file_path, list_a, list_b, lists):
     numbers = df['Number'].tolist()
     a_follows_b = 0
     b_follows_a = 0
+    a_not_follows_b = 0
+    b_not_follows_a = 0
 
     for i in range(len(numbers) - 1):
         if numbers[i] in lists[list_a] and numbers[i + 1] in lists[list_b]:
             a_follows_b += 1
-        elif numbers[i] in lists[list_b] and numbers[i + 1] in lists[list_a]:
+        elif numbers[i] in lists[list_a] and numbers[i + 1] not in lists[list_b]:
+            a_not_follows_b += 1
+        
+        if numbers[i] in lists[list_b] and numbers[i + 1] in lists[list_a]:
             b_follows_a += 1
+        elif numbers[i] in lists[list_b] and numbers[i + 1] not in lists[list_a]:
+            b_not_follows_a += 1
 
-    return {f"{list_a} follows {list_b}": a_follows_b, f"{list_b} follows {list_a}": b_follows_a}
+    return {
+        f"{list_a} follows {list_b}": a_follows_b,
+        f"{list_b} follows {list_a}": b_follows_a,
+        f"{list_a} does not follow {list_b}": a_not_follows_b,
+        f"{list_b} does not follow {list_a}": b_not_follows_a
+    }
 def save_lists(lists):
     with open(list_file_path, 'w') as file:
         json.dump(lists, file, indent=4)

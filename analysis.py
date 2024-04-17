@@ -245,7 +245,7 @@ def app():
                 st.plotly_chart(fig)
             list_pairs = [("Big", "Small"), ("Big", "Orph"), ("Small", "Orph")]
             for pair in list_pairs:
-                results = cross_list_follow_count(file_path, pair[0], pair[1], lists)
+                results = cross_list_follow_count(selected_file, pair[0], pair[1], lists)
                 st.write(pair)
                 for k, v in results.items():
                     st.write(f"{k}: {v}")

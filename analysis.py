@@ -23,7 +23,19 @@ def load_lists():
             "Orph": [1, 20, 14, 31, 9, 17, 34, 6],
             "Small": [27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33]
         }
+def cross_list_follow_count(file_path, list_a, list_b, lists):
+    df = pd.read_csv(file_path)
+    numbers = df['Number'].tolist()
+    a_follows_b = 0
+    b_follows_a = 0
 
+    for i in range(len(numbers) - 1):
+        if numbers[i] in lists[list_a] and numbers[i + 1] in lists[list_b]:
+            a_follows_b += 1
+        elif numbers[i] in lists[list_b] and numbers[i + 1] in lists[list_a]:
+            b_follows_a += 1
+
+    return {f"{list_a} follows {list_b}": a_follows_b, f"{list_b} follows {list_a}": b_follows_a}
 def save_lists(lists):
     with open(list_file_path, 'w') as file:
         json.dump(lists, file, indent=4)
@@ -231,6 +243,11 @@ def app():
                 })
                 fig = px.bar(data, x='Metric', y='Count', title=f"Counts for {list_name}")
                 st.plotly_chart(fig)
-
+            list_pairs = [("Big", "Small"), ("Big", "Orph"), ("Small", "Orph")]
+            for pair in list_pairs:
+                results = cross_list_follow_count(file_path, pair[0], pair[1], lists)
+                st.write(pair)
+                for k, v in results.items():
+                    st.write(f"{k}: {v}")
 if __name__ == "__main__":
     app()

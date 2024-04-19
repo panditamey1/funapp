@@ -382,11 +382,11 @@ def app():
                 results_pair1 = get_subsequences_with_context(selected_lists[pair[0]], raw_numbers)
                 results_pair2 = get_subsequences_with_context(selected_lists[pair[1]], raw_numbers)
                 counts = count_list_occurrences(results_pair1, selected_lists[pair[0]], selected_lists[pair[1]], pair[0], pair[1])
-                st.write(f"Counts for {pair[0]} and {pair[1]}")
+                st.info(f"Counts for {pair[0]} and {pair[1]}")
                 for k, v in counts.items():
                     st.write(f"{k}: {v}")
                 counts = count_list_occurrences(results_pair2, selected_lists[pair[1]], selected_lists[pair[0]], pair[1], pair[0])
-                st.write(f"Counts for {pair[1]} and {pair[0]}")
+                st.info(f"Counts for {pair[1]} and {pair[0]}")
                 for k, v in counts.items():
                     st.write(f"{k}: {v}")
                     

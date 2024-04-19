@@ -85,7 +85,69 @@ def get_subsequences(predefined_list, numbers):
 
     return subsequences
 import pandas as pd
+def get_subsequences_with_context(predefined_list, numbers):
+    subsequences = []
+    in_sequence = False
+    current_sequence = []
+    previous_number = None
 
+    for num in numbers:
+        if num in predefined_list:
+            if not in_sequence:
+                # Start a new sequence with the previous number if it exists
+                if previous_number is not None:
+                    current_sequence = [previous_number]
+                else:
+                    current_sequence = []
+                in_sequence = True
+            current_sequence.append(num)
+        else:
+            if in_sequence:
+                # Continue the current sequence
+                current_sequence.append(num)
+                subsequences.append(current_sequence)
+                current_sequence = []
+                in_sequence = False
+            else:
+                # Reset the previous number if not currently in a sequence
+                previous_number = num
+
+    # Append the last sequence if it ends at the last element
+    if current_sequence:
+        subsequences.append(current_sequence)
+
+    return subsequences
+def count_list_occurrences(subsequences, list_one, list_two, list_one_name='list_one', list_two_name='list_two'):
+    # Initialize counters
+    counts = {
+        f'{list_one_name} first, {list_two_name} second': 0,
+        f'{list_two_name} first, {list_one_name} second': 0,
+        f'{list_one_name} first, {list_one_name} second': 0,
+        f'{list_two_name} first, {list_two_name} second': 0
+    }
+
+    # Process each subsequence
+    for subseq in subsequences:
+        if len(subseq) < 2:
+            continue  # Skip subsequences that don't have at least two numbers
+
+        # Check membership of the first and second numbers in the lists
+        first_in_one = subseq[0] in list_one
+        first_in_two = subseq[0] in list_two
+        second_in_one = subseq[1] in list_one
+        second_in_two = subseq[1] in list_two
+
+        # Update the counters based on memberships
+        if first_in_one and second_in_two:
+            counts[f'{list_one_name} first, {list_two_name} second'] += 1
+        elif first_in_two and second_in_one:
+            counts[f'{list_two_name} first, {list_one_name} second'] += 1
+        elif first_in_one and second_in_one:
+            counts[f'{list_one_name} first, {list_one_name} second'] += 1
+        elif first_in_two and second_in_two:
+            counts[f'{list_two_name} first, {list_two_name} second'] += 1
+
+    return counts
 def neighbors_count(file_path, circular_list):
     # Load data
     df = pd.read_csv(file_path)
@@ -304,11 +366,28 @@ def app():
                 })
                 fig = px.bar(data, x='Metric', y='Count', title=f"Counts for {list_name}")
                 st.plotly_chart(fig)
-            list_pairs = [("Big", "Small"), ("Big", "Orph"), ("Small", "Orph")]
-            for pair in list_pairs:
-                results = cross_list_follow_count(selected_file, pair[0], pair[1], lists)
-                st.write(pair)
-                for k, v in results.items():
+
+            # create list of pairs from lists
+            pairs_list = []
+            for i in range(len(selected_lists)):
+                for j in range(i + 1, len(selected_lists)):
+                    pairs_list.append((list(selected_lists.keys())[i], list(selected_lists.keys())[j]))
+            #list_pairs = [("Big", "Small"), ("Big", "Orph"), ("Small", "Orph")]
+            # for pair in list_pairs:
+            #     results = cross_list_follow_count(selected_file, pair[0], pair[1], lists)
+            #     st.write(pair)
+            #     for k, v in results.items():
+            #         st.write(f"{k}: {v}")
+            for pair in pairs_list:
+                results_pair1 = get_subsequences_with_context(selected_lists[pair[0]], raw_numbers)
+                results_pair2 = get_subsequences_with_context(selected_lists[pair[1]], raw_numbers)
+                counts = count_list_occurrences(results_pair1, selected_lists[pair[0]], selected_lists[pair[1]], pair[0], pair[1])
+                st.write(f"Counts for {pair[0]} and {pair[1]}")
+                for k, v in counts.items():
+                    st.write(f"{k}: {v}")
+                counts = count_list_occurrences(results_pair2, selected_lists[pair[1]], selected_lists[pair[0]], pair[1], pair[0])
+                st.write(f"Counts for {pair[1]} and {pair[0]}")
+                for k, v in counts.items():
                     st.write(f"{k}: {v}")
 if __name__ == "__main__":
     app()

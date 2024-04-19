@@ -260,7 +260,7 @@ def app():
             st.info("neighbors 6")
             circular_list = [0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26]
             match_count, no_match_count = neighbors_count(selected_file, circular_list)
-            st.write("Matches:", match_count, "Non-matches:", no_match_count)    
+            st.write(f"Matches: {match_count}, Non-matches:{no_match_count}")    
             data_pivot = data.melt(id_vars=["List"], value_vars=["Count"])
             fig = px.bar(data_pivot, x='variable', y='value', color='List', title="Number Distribution Across Lists",
                          barmode='stack', color_discrete_sequence=px.colors.qualitative.Set1)

@@ -381,6 +381,12 @@ def app():
             for pair in pairs_list:
                 results_pair1 = get_subsequences_with_context(selected_lists[pair[0]], raw_numbers)
                 results_pair2 = get_subsequences_with_context(selected_lists[pair[1]], raw_numbers)
+                with st.expander(f"subsequences for {pair[0]} and {pair[1]}"):
+                    st.write(results_pair1)
+
+                with st.expander(f"subsequences for {pair[1]} and {pair[0]}"):
+                    st.write(results_pair2)
+
                 counts = count_list_occurrences(results_pair1, selected_lists[pair[0]], selected_lists[pair[1]], pair[0], pair[1])
                 st.info(f"Counts for {pair[0]} and {pair[1]}")
                 # make a table for this

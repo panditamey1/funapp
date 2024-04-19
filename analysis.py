@@ -121,9 +121,7 @@ def count_list_occurrences(subsequences, list_one, list_two, list_one_name='list
     # Initialize counters
     counts = {
         f'{list_one_name} first, {list_two_name} second': 0,
-        f'{list_two_name} first, {list_one_name} second': 0,
-        f'{list_one_name} first, {list_one_name} second': 0,
-        f'{list_two_name} first, {list_two_name} second': 0
+        f'{list_two_name} first, {list_one_name} second': 0
     }
 
     # Process each subsequence
@@ -142,10 +140,7 @@ def count_list_occurrences(subsequences, list_one, list_two, list_one_name='list
             counts[f'{list_one_name} first, {list_two_name} second'] += 1
         elif first_in_two and second_in_one:
             counts[f'{list_two_name} first, {list_one_name} second'] += 1
-        elif first_in_one and second_in_one:
-            counts[f'{list_one_name} first, {list_one_name} second'] += 1
-        elif first_in_two and second_in_two:
-            counts[f'{list_two_name} first, {list_two_name} second'] += 1
+
 
     return counts
 def neighbors_count(file_path, circular_list):

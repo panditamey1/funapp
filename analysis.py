@@ -389,5 +389,6 @@ def app():
                 st.write(f"Counts for {pair[1]} and {pair[0]}")
                 for k, v in counts.items():
                     st.write(f"{k}: {v}")
+                    
 if __name__ == "__main__":
     app()

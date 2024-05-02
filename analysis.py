@@ -231,6 +231,38 @@ def analyze_and_extract_sequences(file_path, lists):
     return stats, numbers
 
 
+import pandas as pd
+
+def neighbors_count(file_path, circular_list, num_neighbors):
+    df = pd.read_csv(file_path)
+    numbers = df['Number'].tolist()
+    
+    # Initialize counters
+    match_count = 0
+    no_match_count = 0
+    
+    # Precompute neighbors for each index in the circular list
+    total_numbers = len(circular_list)
+    neighbors_dict = {}
+    for index in range(total_numbers):
+        neighbors = set()
+        for offset in range(1, num_neighbors + 1):
+            neighbors.add(circular_list[(index - offset) % total_numbers])
+            neighbors.add(circular_list[(index + offset) % total_numbers])
+        neighbors_dict[circular_list[index]] = neighbors
+
+    # Process each pair of consecutive numbers
+    for current_number, next_number in zip(numbers, numbers[1:]):
+        if current_number in neighbors_dict:
+            # Check if the next number is one of the current number's neighbors
+            if next_number in neighbors_dict[current_number]:
+                match_count += 1
+            else:
+                no_match_count += 1
+        else:
+            no_match_count += 1
+
+    return match_count, no_match_count
 
 
 
@@ -302,6 +334,7 @@ def app():
 
     # User selects which lists to analyze
     list_selection = st.multiselect("Select number lists to analyze:", list(lists.keys()))
+    num_neighbors = st.number_input('Number of neighbors on each side', min_value=1, max_value=18, value=6)
 
     if st.button('Submit List Selection'):
         st.session_state.selected_lists = list_selection
@@ -314,7 +347,7 @@ def app():
                 "List": list(selected_lists.keys()),
                 "Count": [counts[name] for name in selected_lists]
             })
-            st.info("neighbors 6")
+            st.info(f"neighbors {num_neighbors}")
             circular_list = [0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26]
             match_count, no_match_count = neighbors_count(selected_file, circular_list)
             st.write(f"Matches: {match_count}, Non-matches:{no_match_count}")    

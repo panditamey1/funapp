@@ -143,48 +143,7 @@ def count_list_occurrences(subsequences, list_one, list_two, list_one_name='list
 
 
     return counts
-def neighbors_count(file_path, circular_list):
-    # Load data
-    df = pd.read_csv(file_path)
-    numbers = df['Number'].tolist()
-    
-    # Initialize counters
-    match_count = 0
-    no_match_count = 0
-    
-    # Get the total number of items in the circular list
-    total_numbers = len(circular_list)
-    
-    # Processing the sequence of numbers
-    for i in range(len(numbers) - 1):
-        current_number = numbers[i]
-        next_number = numbers[i + 1]
-        
-        # Find the index of the current number in the circular list
-        if current_number in circular_list:
-            current_index = circular_list.index(current_number)
-            
-            # Determine neighbors (3 on each side, circular)
-            neighbors = []
-            # Get three predecessors and three successors
-            for offset in range(1, 4):
-                # Use modulo to achieve the circular effect
-                left_neighbor_index = (current_index - offset) % total_numbers
-                right_neighbor_index = (current_index + offset) % total_numbers
-                neighbors.append(circular_list[left_neighbor_index])
-                neighbors.append(circular_list[right_neighbor_index])
-            
-            # Check if the next number is within these neighbors
-            if next_number in neighbors:
-                match_count += 1
-            else:
-                no_match_count += 1
-        else:
-            # If the current number is not in the circular list, count as no match
-            no_match_count += 1
 
-    # Return results
-    return match_count, no_match_count
 
 # Example usage
 def categorize_subsequences(subsequences, predefined_list):
@@ -349,7 +308,7 @@ def app():
             })
             st.info(f"neighbors {num_neighbors}")
             circular_list = [0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26]
-            match_count, no_match_count = neighbors_count(selected_file, circular_list)
+            match_count, no_match_count = neighbors_count(selected_file, circular_list, num_neighbors)
             st.write(f"Matches: {match_count}, Non-matches:{no_match_count}")    
             data_pivot = data.melt(id_vars=["List"], value_vars=["Count"])
             fig = px.bar(data_pivot, x='variable', y='value', color='List', title="Number Distribution Across Lists",

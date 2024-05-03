@@ -168,6 +168,7 @@ def categorize_subsequences(subsequences, predefined_list):
     successful_triples = []
     failed_triples = []
 
+
     for seq in subsequences:
         if len(seq) >= 2:
             if seq[0] in predefined_list and seq[1] in predefined_list:

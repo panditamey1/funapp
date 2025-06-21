@@ -23,12 +23,24 @@ class StrategyBuilder(tk.Tk):
         self.break_n = tk.IntVar(value=3)
         self.use_martingale = tk.BooleanVar(value=True)
         self.first_bet = tk.DoubleVar(value=1.0)
+        self.num_bet = tk.DoubleVar(value=1.0)
+        self.red_bet = tk.DoubleVar(value=1.0)
+        self.black_bet = tk.DoubleVar(value=1.0)
+        self.voisins_bet = tk.DoubleVar(value=1.0)
+        self.orphelins_bet = tk.DoubleVar(value=1.0)
+        self.tiers_bet = tk.DoubleVar(value=1.0)
+        self.split_bet = tk.DoubleVar(value=1.0)
+        self.corner_bet = tk.DoubleVar(value=1.0)
+
         self.num_vars = []
         self.red_var = tk.BooleanVar()
         self.black_var = tk.BooleanVar()
         self.voisins_var = tk.BooleanVar()
         self.orphelins_var = tk.BooleanVar()
         self.tiers_var = tk.BooleanVar()
+        self.split_entry = tk.StringVar()
+        self.corner_entry = tk.StringVar()
+
         self.create_widgets()
 
     def create_widgets(self):
@@ -56,6 +68,22 @@ class StrategyBuilder(tk.Tk):
                                 fg='white', bg=color, selectcolor=color)
             cb.grid(row=n//12, column=n%12, sticky='w')
 
+        bet_frame = ttk.LabelFrame(self, text='Bet Amounts')
+        bet_frame.pack(fill='x', pady=5)
+        labels = ['Singles', 'Red', 'Black', 'Voisins', 'Orphelins',
+                  'Tiers', 'Splits', 'Corners']
+        vars_ = [self.num_bet, self.red_bet, self.black_bet,
+                 self.voisins_bet, self.orphelins_bet,
+                 self.tiers_bet, self.split_bet, self.corner_bet]
+        for i, (lab, var) in enumerate(zip(labels, vars_)):
+            ttk.Label(bet_frame, text=lab).grid(row=0, column=2*i, padx=2)
+            ttk.Entry(bet_frame, textvariable=var, width=5).grid(row=0, column=2*i+1)
+        ttk.Label(bet_frame, text='Splits ex: 1-2,3-4').grid(row=1, column=0, columnspan=4, sticky='w')
+        ttk.Entry(bet_frame, textvariable=self.split_entry, width=25).grid(row=1, column=4, columnspan=4, sticky='w')
+        ttk.Label(bet_frame, text='Corners ex: 1-2-4-5').grid(row=2, column=0, columnspan=4, sticky='w')
+        ttk.Entry(bet_frame, textvariable=self.corner_entry, width=25).grid(row=2, column=4, columnspan=4, sticky='w')
+
+
         opt_frame = ttk.Frame(self)
         opt_frame.pack(pady=5)
         ttk.Label(opt_frame, text='Break after').grid(row=0, column=0)
@@ -74,22 +102,43 @@ class StrategyBuilder(tk.Tk):
         if path:
             self.file_path.set(path)
 
-    def gather_selection(self):
-        numbers = set()
+    def parse_pairs(self, text, count):
+        pairs = []
+        if not text:
+            return pairs
+        for item in text.replace(',', ' ').split():
+            nums = item.split('-')
+            if len(nums) != count:
+                continue
+            try:
+                vals = [int(n) for n in nums]
+            except ValueError:
+                continue
+            if all(0 <= n <= 36 for n in vals):
+                pairs.append(set(vals))
+        return pairs
+
+    def gather_bets(self):
+        bets = []
+        nums = {n for n, var in enumerate(self.num_vars) if var.get()}
+        if nums:
+            bets.append({'nums': nums, 'bet': self.num_bet.get()})
         if self.red_var.get():
-            numbers.update(RED_NUMBERS)
+            bets.append({'nums': RED_NUMBERS, 'bet': self.red_bet.get()})
         if self.black_var.get():
-            numbers.update(BLACK_NUMBERS)
+            bets.append({'nums': BLACK_NUMBERS, 'bet': self.black_bet.get()})
         if self.voisins_var.get():
-            numbers.update(VOISINS)
+            bets.append({'nums': VOISINS, 'bet': self.voisins_bet.get()})
         if self.orphelins_var.get():
-            numbers.update(ORPHELINS)
+            bets.append({'nums': ORPHELINS, 'bet': self.orphelins_bet.get()})
         if self.tiers_var.get():
-            numbers.update(TIERS)
-        for n, var in enumerate(self.num_vars):
-            if var.get():
-                numbers.add(n)
-        return numbers
+            bets.append({'nums': TIERS, 'bet': self.tiers_bet.get()})
+        for pair in self.parse_pairs(self.split_entry.get(), 2):
+            bets.append({'nums': pair, 'bet': self.split_bet.get()})
+        for quad in self.parse_pairs(self.corner_entry.get(), 4):
+            bets.append({'nums': quad, 'bet': self.corner_bet.get()})
+        return bets
+
 
     def run_test(self):
         path = self.file_path.get()
@@ -105,14 +154,14 @@ class StrategyBuilder(tk.Tk):
             messagebox.showerror('Error', 'CSV must have a Number column')
             return
         numbers = df['Number'].tolist()
-        selection = self.gather_selection()
-        if not selection:
+        bets = self.gather_bets()
+        if not bets:
             messagebox.showerror('Error', 'Please select at least one number or group')
             return
         profit, history = self.simulate(
-            numbers, selection, self.break_n.get(),
-            self.use_martingale.get(), self.first_bet.get())
-        hits = sum(1 for n in numbers if n in selection)
+            numbers, bets, self.break_n.get(), self.use_martingale.get())
+        hits = sum(1 for n in numbers if any(n in b['nums'] for b in bets))
+
         rate = hits / len(numbers) * 100 if numbers else 0
         self.result_text.config(state='normal')
         self.result_text.delete('1.0', tk.END)
@@ -139,31 +188,44 @@ class StrategyBuilder(tk.Tk):
         canvas.get_tk_widget().pack(fill='both', expand=True)
 
     @staticmethod
-    def simulate(spins, selection, break_n, martingale, first_bet):
+    def simulate(spins, bets, break_n, martingale):
+        class BetState:
+            def __init__(self, numbers, first):
+                self.numbers = numbers
+                self.first = first
+                self.bet = first
+                self.gap = 0
+                self.betting = False
+
+            def step(self, num):
+                profit = 0
+                if self.betting:
+                    if num in self.numbers:
+                        profit += self.bet
+                        self.bet = self.first
+                        self.betting = False
+                        self.gap = 0
+                    else:
+                        profit -= self.bet
+                        if martingale:
+                            self.bet *= 2
+                else:
+                    if num in self.numbers:
+                        self.gap = 0
+                    else:
+                        self.gap += 1
+                        if self.gap >= break_n:
+                            self.betting = True
+                            self.bet = self.first
+                return profit
+
+        states = [BetState(b['nums'], b['bet']) for b in bets]
         profit = 0
-        gap = 0
-        bet = first_bet
-        betting = False
         history = [0]
         for num in spins:
-            if betting:
-                if num in selection:
-                    profit += bet
-                    bet = first_bet
-                    betting = False
-                    gap = 0
-                else:
-                    profit -= bet
-                    if martingale:
-                        bet *= 2
-            else:
-                if num in selection:
-                    gap = 0
-                else:
-                    gap += 1
-                    if gap >= break_n:
-                        betting = True
-                        bet = first_bet
+            for state in states:
+                profit += state.step(num)
+
             history.append(profit)
         return profit, history
 

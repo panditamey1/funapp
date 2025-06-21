@@ -158,7 +158,7 @@ class StrategyBuilder(tk.Tk):
         if not bets:
             messagebox.showerror('Error', 'Please select at least one number or group')
             return
-        profit, history, rounds = self.simulate(
+        profit, history, rounds_df = self.simulate(
             numbers, bets, self.break_n.get(), self.use_martingale.get())
         hits = sum(1 for n in numbers if any(n in b['nums'] for b in bets))
 
@@ -172,7 +172,7 @@ class StrategyBuilder(tk.Tk):
         self.result_text.config(state='disabled')
 
         self.show_graph(history)
-        self.show_rounds(rounds)
+        self.show_rounds(rounds_df)
 
 
     def show_graph(self, history):
@@ -189,20 +189,42 @@ class StrategyBuilder(tk.Tk):
         canvas.draw()
         canvas.get_tk_widget().pack(fill='both', expand=True)
 
-    def show_rounds(self, rounds):
+    def show_rounds(self, df: pd.DataFrame):
+        """Display dataframe of rounds in a scrollable tree view and allow saving."""
         top = tk.Toplevel(self)
         top.title('Rounds with Bets')
-        text = tk.Text(top, height=20, width=30)
-        text.pack(fill='both', expand=True)
-        text.tag_config('red', foreground='red')
-        text.tag_config('black', foreground='black')
-        text.tag_config('green', foreground='green')
-        text.tag_config('bet', background='yellow')
-        for i, (num, bet) in enumerate(rounds, start=1):
-            tags = [num_color(num)]
-            if bet:
-                tags.append('bet')
-            text.insert('end', f'{i:3d}: {num}\n', tuple(tags))
+
+        frame = ttk.Frame(top)
+        frame.pack(fill='both', expand=True)
+
+        columns = list(df.columns)
+        tree = ttk.Treeview(frame, columns=columns, show='headings')
+        vsb = ttk.Scrollbar(frame, orient='vertical', command=tree.yview)
+        hsb = ttk.Scrollbar(frame, orient='horizontal', command=tree.xview)
+        tree.configure(yscrollcommand=vsb.set, xscrollcommand=hsb.set)
+
+        tree.grid(row=0, column=0, sticky='nsew')
+        vsb.grid(row=0, column=1, sticky='ns')
+        hsb.grid(row=1, column=0, sticky='ew')
+
+        frame.rowconfigure(0, weight=1)
+        frame.columnconfigure(0, weight=1)
+
+        for col in columns:
+            tree.heading(col, text=col)
+            tree.column(col, anchor='center')
+
+        for _, row in df.iterrows():
+            values = [row[col] for col in columns]
+            tree.insert('', 'end', values=values)
+
+        def save_csv():
+            path = filedialog.asksaveasfilename(
+                defaultextension='.csv', filetypes=[('CSV', '*.csv')])
+            if path:
+                df.to_csv(path, index=False)
+
+        ttk.Button(top, text='Save CSV', command=save_csv).pack(pady=5)
 
 
     @staticmethod
@@ -241,13 +263,32 @@ class StrategyBuilder(tk.Tk):
         profit = 0
         history = [0]
         rounds = []
-        for num in spins:
+        total_profit = 0
+        total_loss = 0
+        for idx, num in enumerate(spins, start=1):
             bet_flag = any(state.betting for state in states)
+            total_bet = sum(state.bet for state in states if state.betting)
+            prev_profit = profit
             for state in states:
                 profit += state.step(num)
+            change = profit - prev_profit
+            if change >= 0:
+                total_profit += change
+            else:
+                total_loss += -change
             history.append(profit)
-            rounds.append((num, bet_flag))
-        return profit, history, rounds
+            rounds.append({
+                'Round': idx,
+                'Number': num,
+                'Bet Placed?': bool(total_bet),
+                'Amount': total_bet,
+                'WIN/LOSS': change,
+                'Total Balance': profit,
+                'Total Profit': total_profit,
+                'Total Loss': total_loss
+            })
+        df = pd.DataFrame(rounds)
+        return profit, history, df
 
 
 

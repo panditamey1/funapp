@@ -22,15 +22,8 @@ class StrategyBuilder(tk.Tk):
         self.file_path = tk.StringVar()
         self.break_n = tk.IntVar(value=3)
         self.use_martingale = tk.BooleanVar(value=True)
-        self.first_bet = tk.DoubleVar(value=1.0)
-        self.num_bet = tk.DoubleVar(value=1.0)
-        self.red_bet = tk.DoubleVar(value=1.0)
-        self.black_bet = tk.DoubleVar(value=1.0)
-        self.voisins_bet = tk.DoubleVar(value=1.0)
-        self.orphelins_bet = tk.DoubleVar(value=1.0)
-        self.tiers_bet = tk.DoubleVar(value=1.0)
-        self.split_bet = tk.DoubleVar(value=1.0)
-        self.corner_bet = tk.DoubleVar(value=1.0)
+        self.initial_balance = tk.DoubleVar(value=100.0)
+        self.min_bet = tk.IntVar(value=1)
 
         self.num_vars = []
         self.red_var = tk.BooleanVar()
@@ -68,20 +61,12 @@ class StrategyBuilder(tk.Tk):
                                 fg='white', bg=color, selectcolor=color)
             cb.grid(row=n//12, column=n%12, sticky='w')
 
-        bet_frame = ttk.LabelFrame(self, text='Bet Amounts')
+        bet_frame = ttk.LabelFrame(self, text='Splits and Corners')
         bet_frame.pack(fill='x', pady=5)
-        labels = ['Singles', 'Red', 'Black', 'Voisins', 'Orphelins',
-                  'Tiers', 'Splits', 'Corners']
-        vars_ = [self.num_bet, self.red_bet, self.black_bet,
-                 self.voisins_bet, self.orphelins_bet,
-                 self.tiers_bet, self.split_bet, self.corner_bet]
-        for i, (lab, var) in enumerate(zip(labels, vars_)):
-            ttk.Label(bet_frame, text=lab).grid(row=0, column=2*i, padx=2)
-            ttk.Entry(bet_frame, textvariable=var, width=5).grid(row=0, column=2*i+1)
-        ttk.Label(bet_frame, text='Splits ex: 1-2,3-4').grid(row=1, column=0, columnspan=4, sticky='w')
-        ttk.Entry(bet_frame, textvariable=self.split_entry, width=25).grid(row=1, column=4, columnspan=4, sticky='w')
-        ttk.Label(bet_frame, text='Corners ex: 1-2-4-5').grid(row=2, column=0, columnspan=4, sticky='w')
-        ttk.Entry(bet_frame, textvariable=self.corner_entry, width=25).grid(row=2, column=4, columnspan=4, sticky='w')
+        ttk.Label(bet_frame, text='Splits ex: 1-2,3-4').grid(row=0, column=0, columnspan=2, sticky='w')
+        ttk.Entry(bet_frame, textvariable=self.split_entry, width=25).grid(row=0, column=2, columnspan=2, sticky='w')
+        ttk.Label(bet_frame, text='Corners ex: 1-2-4-5').grid(row=1, column=0, columnspan=2, sticky='w')
+        ttk.Entry(bet_frame, textvariable=self.corner_entry, width=25).grid(row=1, column=2, columnspan=2, sticky='w')
 
 
         opt_frame = ttk.Frame(self)
@@ -90,8 +75,10 @@ class StrategyBuilder(tk.Tk):
         ttk.Entry(opt_frame, textvariable=self.break_n, width=5).grid(row=0, column=1)
         ttk.Label(opt_frame, text='missing rounds').grid(row=0, column=2)
         ttk.Checkbutton(opt_frame, text='Use Martingale', variable=self.use_martingale).grid(row=0, column=3, padx=10)
-        ttk.Label(opt_frame, text='First Bet').grid(row=0, column=4, padx=(10,0))
-        ttk.Entry(opt_frame, textvariable=self.first_bet, width=7).grid(row=0, column=5)
+        ttk.Label(opt_frame, text='Initial Balance').grid(row=0, column=4, padx=(10,0))
+        ttk.Entry(opt_frame, textvariable=self.initial_balance, width=7).grid(row=0, column=5)
+        ttk.Label(opt_frame, text='Min Bet').grid(row=0, column=6, padx=(10,0))
+        ttk.Combobox(opt_frame, textvariable=self.min_bet, values=list(range(1,11)), width=5, state='readonly').grid(row=0, column=7)
 
         ttk.Button(self, text='Run Test', command=self.run_test).pack(pady=5)
         self.result_text = tk.Text(self, height=10, width=80, state='disabled')
@@ -119,25 +106,46 @@ class StrategyBuilder(tk.Tk):
         return pairs
 
     def gather_bets(self):
+        bet_amt = self.min_bet.get()
         bets = []
         nums = {n for n, var in enumerate(self.num_vars) if var.get()}
         if nums:
-            bets.append({'nums': nums, 'bet': self.num_bet.get()})
+            bets.append({'nums': nums, 'bet': bet_amt})
         if self.red_var.get():
-            bets.append({'nums': RED_NUMBERS, 'bet': self.red_bet.get()})
+            bets.append({'nums': RED_NUMBERS, 'bet': bet_amt})
         if self.black_var.get():
-            bets.append({'nums': BLACK_NUMBERS, 'bet': self.black_bet.get()})
+            bets.append({'nums': BLACK_NUMBERS, 'bet': bet_amt})
         if self.voisins_var.get():
-            bets.append({'nums': VOISINS, 'bet': self.voisins_bet.get()})
+            bets.append({'nums': VOISINS, 'bet': bet_amt})
         if self.orphelins_var.get():
-            bets.append({'nums': ORPHELINS, 'bet': self.orphelins_bet.get()})
+            bets.append({'nums': ORPHELINS, 'bet': bet_amt})
         if self.tiers_var.get():
-            bets.append({'nums': TIERS, 'bet': self.tiers_bet.get()})
+            bets.append({'nums': TIERS, 'bet': bet_amt})
         for pair in self.parse_pairs(self.split_entry.get(), 2):
-            bets.append({'nums': pair, 'bet': self.split_bet.get()})
+            bets.append({'nums': pair, 'bet': bet_amt})
         for quad in self.parse_pairs(self.corner_entry.get(), 4):
-            bets.append({'nums': quad, 'bet': self.corner_bet.get()})
+            bets.append({'nums': quad, 'bet': bet_amt})
         return bets
+
+    def estimate_total_bet_amount(self) -> float:
+        """Estimate the starting bet amount given the selected options."""
+        bet = self.min_bet.get()
+        total = 0.0
+        nums = [n for n, var in enumerate(self.num_vars) if var.get()]
+        total += len(nums) * bet
+        total += len(self.parse_pairs(self.split_entry.get(), 2)) * bet
+        total += len(self.parse_pairs(self.corner_entry.get(), 4)) * bet
+        if self.red_var.get():
+            total += bet
+        if self.black_var.get():
+            total += bet
+        if self.voisins_var.get():
+            total += 9 * bet
+        if self.orphelins_var.get():
+            total += 5 * bet
+        if self.tiers_var.get():
+            total += 6 * bet
+        return total
 
 
     def run_test(self):
@@ -158,8 +166,10 @@ class StrategyBuilder(tk.Tk):
         if not bets:
             messagebox.showerror('Error', 'Please select at least one number or group')
             return
-        profit, history, rounds = self.simulate(
-            numbers, bets, self.break_n.get(), self.use_martingale.get())
+        est_total = self.estimate_total_bet_amount()
+        profit, history, rounds_df = self.simulate(
+            numbers, bets, self.break_n.get(),
+            self.use_martingale.get(), self.initial_balance.get())
         hits = sum(1 for n in numbers if any(n in b['nums'] for b in bets))
 
         rate = hits / len(numbers) * 100 if numbers else 0
@@ -167,12 +177,15 @@ class StrategyBuilder(tk.Tk):
         self.result_text.delete('1.0', tk.END)
         self.result_text.insert(
             tk.END,
-            f'Total profit: {profit}\nHits: {hits}/{len(numbers)} ({rate:.2f}%)\n'
-            f'Max profit: {max(history):.2f}\nMin profit: {min(history):.2f}\n')
+            f'Final Balance: {profit:.2f}\n'
+            f'Profit/Loss: {profit - self.initial_balance.get():.2f}\n'
+            f'Hits: {hits}/{len(numbers)} ({rate:.2f}%)\n'
+            f'Max balance: {max(history):.2f}\nMin balance: {min(history):.2f}\n'
+            f'Estimated Starting Bet: {est_total:.2f}\n')
         self.result_text.config(state='disabled')
 
         self.show_graph(history)
-        self.show_rounds(rounds)
+        self.show_rounds(rounds_df)
 
 
     def show_graph(self, history):
@@ -180,33 +193,55 @@ class StrategyBuilder(tk.Tk):
         ax = fig.add_subplot(111)
         ax.plot(range(len(history)), history, marker='o')
         ax.set_xlabel('Round')
-        ax.set_ylabel('Profit')
-        ax.set_title('Profit per Round')
+        ax.set_ylabel('Balance')
+        ax.set_title('Balance per Round')
 
         top = tk.Toplevel(self)
-        top.title('Profit Graph')
+        top.title('Balance Graph')
         canvas = FigureCanvasTkAgg(fig, master=top)
         canvas.draw()
         canvas.get_tk_widget().pack(fill='both', expand=True)
 
-    def show_rounds(self, rounds):
+    def show_rounds(self, df: pd.DataFrame):
+        """Display dataframe of rounds in a scrollable tree view and allow saving."""
         top = tk.Toplevel(self)
         top.title('Rounds with Bets')
-        text = tk.Text(top, height=20, width=30)
-        text.pack(fill='both', expand=True)
-        text.tag_config('red', foreground='red')
-        text.tag_config('black', foreground='black')
-        text.tag_config('green', foreground='green')
-        text.tag_config('bet', background='yellow')
-        for i, (num, bet) in enumerate(rounds, start=1):
-            tags = [num_color(num)]
-            if bet:
-                tags.append('bet')
-            text.insert('end', f'{i:3d}: {num}\n', tuple(tags))
+
+        frame = ttk.Frame(top)
+        frame.pack(fill='both', expand=True)
+
+        columns = list(df.columns)
+        tree = ttk.Treeview(frame, columns=columns, show='headings')
+        vsb = ttk.Scrollbar(frame, orient='vertical', command=tree.yview)
+        hsb = ttk.Scrollbar(frame, orient='horizontal', command=tree.xview)
+        tree.configure(yscrollcommand=vsb.set, xscrollcommand=hsb.set)
+
+        tree.grid(row=0, column=0, sticky='nsew')
+        vsb.grid(row=0, column=1, sticky='ns')
+        hsb.grid(row=1, column=0, sticky='ew')
+
+        frame.rowconfigure(0, weight=1)
+        frame.columnconfigure(0, weight=1)
+
+        for col in columns:
+            tree.heading(col, text=col)
+            tree.column(col, anchor='center')
+
+        for _, row in df.iterrows():
+            values = [row[col] for col in columns]
+            tree.insert('', 'end', values=values)
+
+        def save_csv():
+            path = filedialog.asksaveasfilename(
+                defaultextension='.csv', filetypes=[('CSV', '*.csv')])
+            if path:
+                df.to_csv(path, index=False)
+
+        ttk.Button(top, text='Save CSV', command=save_csv).pack(pady=5)
 
 
     @staticmethod
-    def simulate(spins, bets, break_n, martingale):
+    def simulate(spins, bets, break_n, martingale, initial_balance=0):
         class BetState:
             def __init__(self, numbers, first):
                 self.numbers = numbers
@@ -238,16 +273,35 @@ class StrategyBuilder(tk.Tk):
                 return profit
 
         states = [BetState(b['nums'], b['bet']) for b in bets]
-        profit = 0
-        history = [0]
+        profit = initial_balance
+        history = [initial_balance]
         rounds = []
-        for num in spins:
+        total_profit = 0
+        total_loss = 0
+        for idx, num in enumerate(spins, start=1):
             bet_flag = any(state.betting for state in states)
+            total_bet = sum(state.bet for state in states if state.betting)
+            prev_profit = profit
             for state in states:
                 profit += state.step(num)
+            change = profit - prev_profit
+            if change >= 0:
+                total_profit += change
+            else:
+                total_loss += -change
             history.append(profit)
-            rounds.append((num, bet_flag))
-        return profit, history, rounds
+            rounds.append({
+                'Round': idx,
+                'Number': num,
+                'Bet Placed?': bool(total_bet),
+                'Amount': total_bet,
+                'WIN/LOSS': change,
+                'Total Balance': profit,
+                'Total Profit': total_profit,
+                'Total Loss': total_loss
+            })
+        df = pd.DataFrame(rounds)
+        return profit, history, df
 
 
 

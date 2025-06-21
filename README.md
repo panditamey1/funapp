@@ -13,4 +13,6 @@ This repository contains various Python applications. The `tk_roulette_app.py` s
    python tk_roulette_app.py
    ```
 
-The app allows entering numbers (0-36) and tracks history in `roulette_history.csv`.
+The app allows entering numbers (0-36) and stores each session in a new CSV
+inside the `roulette_games` folder. Numbers are highlighted by color and you
+can adjust the history box sizes from within the UI.

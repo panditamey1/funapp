@@ -1,9 +1,12 @@
 import csv
 import os
+from datetime import datetime
 import tkinter as tk
 from tkinter import ttk
 
-CSV_PATH = 'roulette_history.csv'
+CSV_DIR = 'roulette_games'
+timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+CSV_PATH = os.path.join(CSV_DIR, f'game_{timestamp}.csv')
 
 RED_NUMBERS = {1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36}
 BLACK_NUMBERS = {2,4,6,8,10,11,13,15,17,20,22,24,26,28,29,31,33,35}
@@ -14,6 +17,7 @@ TIERS = {27,13,36,11,30,8,23,10,5,24,16,33}
 
 
 def ensure_csv():
+    os.makedirs(CSV_DIR, exist_ok=True)
     if not os.path.exists(CSV_PATH):
         with open(CSV_PATH, 'w', newline='') as f:
             writer = csv.writer(f)
@@ -64,6 +68,8 @@ class RouletteApp(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title('Roulette Number Logger')
+        # use full screen
+        self.geometry(f"{self.winfo_screenwidth()}x{self.winfo_screenheight()}")
         self.numbers = load_numbers()
 
         self.create_widgets()
@@ -92,23 +98,38 @@ class RouletteApp(tk.Tk):
         undo_btn = ttk.Button(self, text='Undo Last', command=self.undo)
         undo_btn.pack(pady=5)
 
+        # Text box size controls
+        size_frame = ttk.Frame(self)
+        size_frame.pack(pady=5)
+        ttk.Label(size_frame, text='History WxH').grid(row=0, column=0)
+        self.hist_w = tk.IntVar(value=80)
+        self.hist_h = tk.IntVar(value=2)
+        ttk.Entry(size_frame, textvariable=self.hist_w, width=5).grid(row=0, column=1)
+        ttk.Entry(size_frame, textvariable=self.hist_h, width=5).grid(row=0, column=2)
+        ttk.Label(size_frame, text='Sector WxH').grid(row=0, column=3, padx=(10,0))
+        self.sec_w = tk.IntVar(value=80)
+        self.sec_h = tk.IntVar(value=6)
+        ttk.Entry(size_frame, textvariable=self.sec_w, width=5).grid(row=0, column=4)
+        ttk.Entry(size_frame, textvariable=self.sec_h, width=5).grid(row=0, column=5)
+        ttk.Button(size_frame, text='Apply Size', command=self.apply_size).grid(row=0, column=6, padx=5)
+
         # History display
         hist_label = ttk.Label(self, text='History (Last to First)')
         hist_label.pack()
         self.hist_text = tk.Text(self, height=2, width=80, state='disabled')
-        self.hist_text.pack()
-        self.hist_text.tag_config('red', foreground='red')
-        self.hist_text.tag_config('black', foreground='black')
-        self.hist_text.tag_config('green', foreground='green')
+        self.hist_text.pack(fill='x')
+        self.hist_text.tag_config('red', background='red', foreground='white')
+        self.hist_text.tag_config('black', background='black', foreground='white')
+        self.hist_text.tag_config('green', background='green', foreground='white')
 
         # Sector history display
         sector_label = ttk.Label(self, text='History by Roulette Sections (20 per row)')
         sector_label.pack()
         self.sector_text = tk.Text(self, height=6, width=80, state='disabled')
-        self.sector_text.pack()
-        self.sector_text.tag_config('green', foreground='green')
-        self.sector_text.tag_config('blue', foreground='blue')
-        self.sector_text.tag_config('orange', foreground='orange')
+        self.sector_text.pack(fill='both', expand=True)
+        self.sector_text.tag_config('green', background='green', foreground='white')
+        self.sector_text.tag_config('blue', background='blue', foreground='white')
+        self.sector_text.tag_config('orange', background='orange', foreground='white')
 
     def add_number(self, num):
         save_number(num)
@@ -150,6 +171,10 @@ class RouletteApp(tk.Tk):
                 self.sector_text.insert(tk.END, '\n')
         self.sector_text.config(state='disabled')
 
+    def apply_size(self):
+        self.hist_text.config(width=self.hist_w.get(), height=self.hist_h.get())
+        self.sector_text.config(width=self.sec_w.get(), height=self.sec_h.get())
+        
 
 def main():
     app = RouletteApp()

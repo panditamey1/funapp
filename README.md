@@ -17,6 +17,8 @@ The app allows entering numbers (0-36) and stores each session in a new CSV
 inside the `roulette_games` folder. Numbers are highlighted by color and you
 can adjust the history box sizes from within the UI.
 
+
+
 ## Testing strategies
 
 You can test betting strategies against saved CSV files using the strategy

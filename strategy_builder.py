@@ -31,6 +31,7 @@ class StrategyBuilder(tk.Tk):
         self.tiers_bet = tk.DoubleVar(value=1.0)
         self.split_bet = tk.DoubleVar(value=1.0)
         self.corner_bet = tk.DoubleVar(value=1.0)
+
         self.num_vars = []
         self.red_var = tk.BooleanVar()
         self.black_var = tk.BooleanVar()
@@ -39,6 +40,7 @@ class StrategyBuilder(tk.Tk):
         self.tiers_var = tk.BooleanVar()
         self.split_entry = tk.StringVar()
         self.corner_entry = tk.StringVar()
+
         self.create_widgets()
 
     def create_widgets(self):
@@ -80,6 +82,7 @@ class StrategyBuilder(tk.Tk):
         ttk.Entry(bet_frame, textvariable=self.split_entry, width=25).grid(row=1, column=4, columnspan=4, sticky='w')
         ttk.Label(bet_frame, text='Corners ex: 1-2-4-5').grid(row=2, column=0, columnspan=4, sticky='w')
         ttk.Entry(bet_frame, textvariable=self.corner_entry, width=25).grid(row=2, column=4, columnspan=4, sticky='w')
+
 
         opt_frame = ttk.Frame(self)
         opt_frame.pack(pady=5)
@@ -136,6 +139,7 @@ class StrategyBuilder(tk.Tk):
             bets.append({'nums': quad, 'bet': self.corner_bet.get()})
         return bets
 
+
     def run_test(self):
         path = self.file_path.get()
         if not path:
@@ -157,6 +161,7 @@ class StrategyBuilder(tk.Tk):
         profit, history, rounds = self.simulate(
             numbers, bets, self.break_n.get(), self.use_martingale.get())
         hits = sum(1 for n in numbers if any(n in b['nums'] for b in bets))
+
         rate = hits / len(numbers) * 100 if numbers else 0
         self.result_text.config(state='normal')
         self.result_text.delete('1.0', tk.END)
@@ -168,6 +173,7 @@ class StrategyBuilder(tk.Tk):
 
         self.show_graph(history)
         self.show_rounds(rounds)
+
 
     def show_graph(self, history):
         fig = plt.Figure(figsize=(6, 3))
@@ -197,6 +203,7 @@ class StrategyBuilder(tk.Tk):
             if bet:
                 tags.append('bet')
             text.insert('end', f'{i:3d}: {num}\n', tuple(tags))
+
 
     @staticmethod
     def simulate(spins, bets, break_n, martingale):
@@ -241,6 +248,7 @@ class StrategyBuilder(tk.Tk):
             history.append(profit)
             rounds.append((num, bet_flag))
         return profit, history, rounds
+
 
 
 def main():

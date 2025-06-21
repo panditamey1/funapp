@@ -153,6 +153,7 @@ class StrategyBuilder(tk.Tk):
             total += 5 * bet
         if self.tiers_var.get():
             total += 6 * bet
+
         return total
 
 
@@ -178,6 +179,7 @@ class StrategyBuilder(tk.Tk):
         profit, history, rounds_df = self.simulate(
             numbers, bets, self.break_n.get(),
             self.use_martingale.get(), self.initial_balance.get())
+
         hits = sum(1 for n in numbers if any(n in b['nums'] for b in bets))
 
         rate = hits / len(numbers) * 100 if numbers else 0
@@ -189,6 +191,8 @@ class StrategyBuilder(tk.Tk):
             f'Profit/Loss: {profit - self.initial_balance.get():.2f}\n'
             f'Hits: {hits}/{len(numbers)} ({rate:.2f}%)\n'
             f'Max balance: {max(history):.2f}\nMin balance: {min(history):.2f}\n'
+
+
             f'Estimated Starting Bet: {est_total:.2f}\n')
         self.result_text.config(state='disabled')
 
@@ -255,6 +259,7 @@ class StrategyBuilder(tk.Tk):
                 color_tag = num_color(row['Number'])
             change_tag = 'win' if row['WIN/LOSS'] >= 0 else 'loss'
             tree.insert('', 'end', values=values, tags=(color_tag, change_tag))
+
 
         def save_csv():
             path = filedialog.asksaveasfilename(

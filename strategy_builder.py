@@ -15,6 +15,14 @@ def num_color(n: int) -> str:
         return 'green'
     return 'red' if n in RED_NUMBERS else 'black'
 
+def sector_color(n: int) -> str:
+    """Return color based on roulette sector."""
+    if n in VOISINS:
+        return 'green'
+    if n in ORPHELINS:
+        return 'blue'
+    return 'orange'
+
 class StrategyBuilder(tk.Tk):
     def __init__(self):
         super().__init__()
@@ -227,9 +235,26 @@ class StrategyBuilder(tk.Tk):
             tree.heading(col, text=col)
             tree.column(col, anchor='center')
 
+        tree.tag_configure('red', foreground='red')
+        tree.tag_configure('black', foreground='black')
+        tree.tag_configure('green', foreground='green')
+        tree.tag_configure('blue', foreground='blue')
+        tree.tag_configure('orange', foreground='orange')
+        tree.tag_configure('win', background='#ccffcc')
+        tree.tag_configure('loss', background='#ffcccc')
+
+        use_sectors = any([self.voisins_var.get(),
+                           self.orphelins_var.get(),
+                           self.tiers_var.get()])
+
         for _, row in df.iterrows():
             values = [row[col] for col in columns]
-            tree.insert('', 'end', values=values)
+            if use_sectors:
+                color_tag = sector_color(row['Number'])
+            else:
+                color_tag = num_color(row['Number'])
+            change_tag = 'win' if row['WIN/LOSS'] >= 0 else 'loss'
+            tree.insert('', 'end', values=values, tags=(color_tag, change_tag))
 
         def save_csv():
             path = filedialog.asksaveasfilename(

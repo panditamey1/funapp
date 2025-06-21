@@ -158,7 +158,7 @@ class StrategyBuilder(tk.Tk):
         if not bets:
             messagebox.showerror('Error', 'Please select at least one number or group')
             return
-        profit, history = self.simulate(
+        profit, history, rounds = self.simulate(
             numbers, bets, self.break_n.get(), self.use_martingale.get())
         hits = sum(1 for n in numbers if any(n in b['nums'] for b in bets))
 
@@ -172,6 +172,8 @@ class StrategyBuilder(tk.Tk):
         self.result_text.config(state='disabled')
 
         self.show_graph(history)
+        self.show_rounds(rounds)
+
 
     def show_graph(self, history):
         fig = plt.Figure(figsize=(6, 3))
@@ -186,6 +188,22 @@ class StrategyBuilder(tk.Tk):
         canvas = FigureCanvasTkAgg(fig, master=top)
         canvas.draw()
         canvas.get_tk_widget().pack(fill='both', expand=True)
+
+    def show_rounds(self, rounds):
+        top = tk.Toplevel(self)
+        top.title('Rounds with Bets')
+        text = tk.Text(top, height=20, width=30)
+        text.pack(fill='both', expand=True)
+        text.tag_config('red', foreground='red')
+        text.tag_config('black', foreground='black')
+        text.tag_config('green', foreground='green')
+        text.tag_config('bet', background='yellow')
+        for i, (num, bet) in enumerate(rounds, start=1):
+            tags = [num_color(num)]
+            if bet:
+                tags.append('bet')
+            text.insert('end', f'{i:3d}: {num}\n', tuple(tags))
+
 
     @staticmethod
     def simulate(spins, bets, break_n, martingale):
@@ -222,12 +240,15 @@ class StrategyBuilder(tk.Tk):
         states = [BetState(b['nums'], b['bet']) for b in bets]
         profit = 0
         history = [0]
+        rounds = []
         for num in spins:
+            bet_flag = any(state.betting for state in states)
             for state in states:
                 profit += state.step(num)
-
             history.append(profit)
-        return profit, history
+            rounds.append((num, bet_flag))
+        return profit, history, rounds
+
 
 
 def main():

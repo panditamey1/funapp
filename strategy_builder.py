@@ -139,6 +139,25 @@ class StrategyBuilder(tk.Tk):
             bets.append({'nums': quad, 'bet': self.corner_bet.get()})
         return bets
 
+    def estimate_total_bet_amount(self) -> float:
+        """Estimate the starting bet amount given the selected options."""
+        total = 0.0
+        nums = [n for n, var in enumerate(self.num_vars) if var.get()]
+        total += len(nums) * self.num_bet.get()
+        total += len(self.parse_pairs(self.split_entry.get(), 2)) * self.split_bet.get()
+        total += len(self.parse_pairs(self.corner_entry.get(), 4)) * self.corner_bet.get()
+        if self.red_var.get():
+            total += self.red_bet.get()
+        if self.black_var.get():
+            total += self.black_bet.get()
+        if self.voisins_var.get():
+            total += 9 * self.voisins_bet.get()
+        if self.orphelins_var.get():
+            total += 5 * self.orphelins_bet.get()
+        if self.tiers_var.get():
+            total += 6 * self.tiers_bet.get()
+        return total
+
 
     def run_test(self):
         path = self.file_path.get()
@@ -158,6 +177,7 @@ class StrategyBuilder(tk.Tk):
         if not bets:
             messagebox.showerror('Error', 'Please select at least one number or group')
             return
+        est_total = self.estimate_total_bet_amount()
         profit, history, rounds_df = self.simulate(
             numbers, bets, self.break_n.get(), self.use_martingale.get())
         hits = sum(1 for n in numbers if any(n in b['nums'] for b in bets))
@@ -168,7 +188,8 @@ class StrategyBuilder(tk.Tk):
         self.result_text.insert(
             tk.END,
             f'Total profit: {profit}\nHits: {hits}/{len(numbers)} ({rate:.2f}%)\n'
-            f'Max profit: {max(history):.2f}\nMin profit: {min(history):.2f}\n')
+            f'Max profit: {max(history):.2f}\nMin profit: {min(history):.2f}\n'
+            f'Estimated Starting Bet: {est_total:.2f}\n')
         self.result_text.config(state='disabled')
 
         self.show_graph(history)

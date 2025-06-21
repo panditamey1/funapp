@@ -20,6 +20,16 @@ can adjust the history box sizes from within the UI.
 ## Testing strategies
 
 You can test betting strategies against saved CSV files using the strategy
+=======
+
+
+Choose a CSV that contains a `Number` column. The tester lets you pick numbers
+via color-coded checkboxes or select groups such as red/black or wheel
+sections. Set the break condition, initial bet amount, and whether to use
+Martingale, then run the test to see the simulated profit. The results window
+shows hit rate and min/max profit, and a separate pop-up graph plots profit per
+round.
+
 builder:
 
 ```bash
@@ -33,3 +43,8 @@ Martingale, then run the test to see the simulated profit. Each group (red,
 black, wheel sectors, etc.) can have its own bet amount. You can also specify
 split bets (`1-2,3-4`) or corner bets (`1-2-4-5`). The results window shows hit
 rate and min/max profit, and a separate pop-up graph plots profit per round.
+=======
+Choose a CSV that contains a `Number` column, select the numbers or groups to
+bet on, set the break condition and whether to use Martingale, then run the test
+to see the simulated profit.
+

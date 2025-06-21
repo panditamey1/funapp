@@ -10,6 +10,77 @@ VOISINS = {22,18,29,7,28,12,35,3,26,0,32,15,19,4,21,2,25}
 ORPHELINS = {1,20,14,31,9,17,34,6}
 TIERS = {27,13,36,11,30,8,23,10,5,24,16,33}
 
+EVEN_NUMBERS = {n for n in range(1, 37) if n % 2 == 0}
+ODD_NUMBERS = {n for n in range(1, 37) if n % 2 == 1}
+LOW_NUMBERS = set(range(1, 19))
+HIGH_NUMBERS = set(range(19, 37))
+DOZEN_1 = set(range(1, 13))
+DOZEN_2 = set(range(13, 25))
+DOZEN_3 = set(range(25, 37))
+COLUMN_1 = {n for n in range(1, 37) if (n - 1) % 3 == 0}
+COLUMN_2 = {n for n in range(1, 37) if (n - 2) % 3 == 0}
+COLUMN_3 = {n for n in range(1, 37) if (n - 3) % 3 == 0}
+
+
+def roulette_bets_table(min_bet):
+    bets = [
+        {"Bet": "Red / Black", "units": 1, "Type": "Even Money"},
+        {"Bet": "Even / Odd", "units": 1, "Type": "Even Money"},
+        {"Bet": "Low / High", "units": 1, "Type": "Even Money"},
+        {"Bet": "Dozen", "units": 1, "Type": "Dozen (2:1)"},
+        {"Bet": "Column", "units": 1, "Type": "Column (2:1)"},
+        {"Bet": "6 Number", "units": 1, "Type": "Line (5:1)"},
+        {"Bet": "5 Number", "units": 1, "Type": "Top Line (6:1)"},
+        {"Bet": "4 Number", "units": 1, "Type": "Corner (8:1)"},
+        {"Bet": "3 Number", "units": 1, "Type": "Street (11:1)"},
+        {"Bet": "2 Number", "units": 1, "Type": "Split (17:1)"},
+        {"Bet": "Single Number", "units": 1, "Type": "Straight (35:1)"},
+        {"Bet": "Voisins du Zero (0,2,3)", "units": 2, "Type": "Basket"},
+        {"Bet": "Voisins du Zero (4,7)", "units": 1, "Type": "Split"},
+        {"Bet": "Voisins du Zero (12,15)", "units": 1, "Type": "Split"},
+        {"Bet": "Voisins du Zero (18,21)", "units": 1, "Type": "Split"},
+        {"Bet": "Voisins du Zero (19,22)", "units": 1, "Type": "Split"},
+        {"Bet": "Voisins du Zero (25,26,28,29)", "units": 2, "Type": "Corner"},
+        {"Bet": "Voisins du Zero (32,35)", "units": 1, "Type": "Split"},
+        {"Bet": "Jeu Zero (0,3)", "units": 1, "Type": "Split"},
+        {"Bet": "Jeu Zero (12,15)", "units": 1, "Type": "Split"},
+        {"Bet": "Jeu Zero (26)", "units": 1, "Type": "Straight"},
+        {"Bet": "Jeu Zero (32,35)", "units": 1, "Type": "Split"},
+        {"Bet": "Tiers du Cylindre (5,8)", "units": 1, "Type": "Split"},
+        {"Bet": "Tiers du Cylindre (10,11)", "units": 1, "Type": "Split"},
+        {"Bet": "Tiers du Cylindre (13,16)", "units": 1, "Type": "Split"},
+        {"Bet": "Tiers du Cylindre (23,24)", "units": 1, "Type": "Split"},
+        {"Bet": "Tiers du Cylindre (27,30)", "units": 1, "Type": "Split"},
+        {"Bet": "Tiers du Cylindre (33,36)", "units": 1, "Type": "Split"},
+        {"Bet": "Orphelins (1)", "units": 1, "Type": "Straight"},
+        {"Bet": "Orphelins (6,9)", "units": 1, "Type": "Split"},
+        {"Bet": "Orphelins (14,17)", "units": 1, "Type": "Split"},
+        {"Bet": "Orphelins (17,20)", "units": 1, "Type": "Split"},
+        {"Bet": "Orphelins (31,34)", "units": 1, "Type": "Split"},
+        {"Bet": "Neighbours", "units": 5, "Type": "Neighbours (custom)"},
+        {"Bet": "Final 0", "units": 4, "Type": "Finale"},
+        {"Bet": "Final 1", "units": 4, "Type": "Finale"},
+        {"Bet": "Final 2", "units": 4, "Type": "Finale"},
+        {"Bet": "Final 3", "units": 4, "Type": "Finale"},
+        {"Bet": "Final 4", "units": 4, "Type": "Finale"},
+        {"Bet": "Final 5", "units": 4, "Type": "Finale"},
+        {"Bet": "Final 6", "units": 4, "Type": "Finale"},
+        {"Bet": "Final 7", "units": 3, "Type": "Finale"},
+        {"Bet": "Final 8", "units": 3, "Type": "Finale"},
+        {"Bet": "Final 9", "units": 3, "Type": "Finale"},
+    ]
+
+    for bet in bets:
+        bet['Total Amount'] = bet['units'] * min_bet
+
+    bet_summary = {bet["Bet"]: {
+        "Units": bet["units"],
+        "Total Amount": bet["Total Amount"],
+        "Type": bet["Type"]
+    } for bet in bets}
+
+    return bet_summary
+
 def num_color(n: int) -> str:
     if n == 0:
         return 'green'
@@ -36,6 +107,16 @@ class StrategyBuilder(tk.Tk):
         self.num_vars = []
         self.red_var = tk.BooleanVar()
         self.black_var = tk.BooleanVar()
+        self.even_var = tk.BooleanVar()
+        self.odd_var = tk.BooleanVar()
+        self.low_var = tk.BooleanVar()
+        self.high_var = tk.BooleanVar()
+        self.dozen1_var = tk.BooleanVar()
+        self.dozen2_var = tk.BooleanVar()
+        self.dozen3_var = tk.BooleanVar()
+        self.column1_var = tk.BooleanVar()
+        self.column2_var = tk.BooleanVar()
+        self.column3_var = tk.BooleanVar()
         self.voisins_var = tk.BooleanVar()
         self.orphelins_var = tk.BooleanVar()
         self.tiers_var = tk.BooleanVar()
@@ -55,12 +136,22 @@ class StrategyBuilder(tk.Tk):
         sel_frame.pack(fill='x', pady=5)
         ttk.Checkbutton(sel_frame, text='Red', variable=self.red_var).grid(row=0, column=0, sticky='w')
         ttk.Checkbutton(sel_frame, text='Black', variable=self.black_var).grid(row=0, column=1, sticky='w')
-        ttk.Checkbutton(sel_frame, text='Voisins du Zero', variable=self.voisins_var).grid(row=1, column=0, sticky='w')
-        ttk.Checkbutton(sel_frame, text='Orphelins', variable=self.orphelins_var).grid(row=1, column=1, sticky='w')
-        ttk.Checkbutton(sel_frame, text='Tiers du Cylindre', variable=self.tiers_var).grid(row=1, column=2, sticky='w')
+        ttk.Checkbutton(sel_frame, text='Even', variable=self.even_var).grid(row=0, column=2, sticky='w')
+        ttk.Checkbutton(sel_frame, text='Odd', variable=self.odd_var).grid(row=0, column=3, sticky='w')
+        ttk.Checkbutton(sel_frame, text='Low (1-18)', variable=self.low_var).grid(row=1, column=0, sticky='w')
+        ttk.Checkbutton(sel_frame, text='High (19-36)', variable=self.high_var).grid(row=1, column=1, sticky='w')
+        ttk.Checkbutton(sel_frame, text='1st Dozen', variable=self.dozen1_var).grid(row=1, column=2, sticky='w')
+        ttk.Checkbutton(sel_frame, text='2nd Dozen', variable=self.dozen2_var).grid(row=1, column=3, sticky='w')
+        ttk.Checkbutton(sel_frame, text='3rd Dozen', variable=self.dozen3_var).grid(row=1, column=4, sticky='w')
+        ttk.Checkbutton(sel_frame, text='Column 1', variable=self.column1_var).grid(row=2, column=0, sticky='w')
+        ttk.Checkbutton(sel_frame, text='Column 2', variable=self.column2_var).grid(row=2, column=1, sticky='w')
+        ttk.Checkbutton(sel_frame, text='Column 3', variable=self.column3_var).grid(row=2, column=2, sticky='w')
+        ttk.Checkbutton(sel_frame, text='Voisins du Zero', variable=self.voisins_var).grid(row=2, column=3, sticky='w')
+        ttk.Checkbutton(sel_frame, text='Orphelins', variable=self.orphelins_var).grid(row=2, column=4, sticky='w')
+        ttk.Checkbutton(sel_frame, text='Tiers du Cylindre', variable=self.tiers_var).grid(row=2, column=5, sticky='w')
 
         num_frame = ttk.Frame(sel_frame)
-        num_frame.grid(row=2, column=0, columnspan=3, pady=5)
+        num_frame.grid(row=3, column=0, columnspan=6, pady=5)
         for n in range(37):
             var = tk.BooleanVar()
             self.num_vars.append(var)
@@ -89,6 +180,7 @@ class StrategyBuilder(tk.Tk):
         ttk.Combobox(opt_frame, textvariable=self.min_bet, values=list(range(1,11)), width=5, state='readonly').grid(row=0, column=7)
 
         ttk.Button(self, text='Run Test', command=self.run_test).pack(pady=5)
+        ttk.Button(self, text='Show Bet Table', command=self.show_bets_table).pack(pady=5)
         self.result_text = tk.Text(self, height=10, width=80, state='disabled')
         self.result_text.pack(padx=5, pady=5)
 
@@ -123,6 +215,26 @@ class StrategyBuilder(tk.Tk):
             bets.append({'nums': RED_NUMBERS, 'bet': bet_amt})
         if self.black_var.get():
             bets.append({'nums': BLACK_NUMBERS, 'bet': bet_amt})
+        if self.even_var.get():
+            bets.append({'nums': EVEN_NUMBERS, 'bet': bet_amt})
+        if self.odd_var.get():
+            bets.append({'nums': ODD_NUMBERS, 'bet': bet_amt})
+        if self.low_var.get():
+            bets.append({'nums': LOW_NUMBERS, 'bet': bet_amt})
+        if self.high_var.get():
+            bets.append({'nums': HIGH_NUMBERS, 'bet': bet_amt})
+        if self.dozen1_var.get():
+            bets.append({'nums': DOZEN_1, 'bet': bet_amt})
+        if self.dozen2_var.get():
+            bets.append({'nums': DOZEN_2, 'bet': bet_amt})
+        if self.dozen3_var.get():
+            bets.append({'nums': DOZEN_3, 'bet': bet_amt})
+        if self.column1_var.get():
+            bets.append({'nums': COLUMN_1, 'bet': bet_amt})
+        if self.column2_var.get():
+            bets.append({'nums': COLUMN_2, 'bet': bet_amt})
+        if self.column3_var.get():
+            bets.append({'nums': COLUMN_3, 'bet': bet_amt})
         if self.voisins_var.get():
             bets.append({'nums': VOISINS, 'bet': bet_amt})
         if self.orphelins_var.get():
@@ -139,20 +251,49 @@ class StrategyBuilder(tk.Tk):
         """Estimate the starting bet amount given the selected options."""
         bet = self.min_bet.get()
         total = 0.0
+        table = roulette_bets_table(bet)
+
         nums = [n for n, var in enumerate(self.num_vars) if var.get()]
         total += len(nums) * bet
         total += len(self.parse_pairs(self.split_entry.get(), 2)) * bet
         total += len(self.parse_pairs(self.corner_entry.get(), 4)) * bet
+
         if self.red_var.get():
-            total += bet
+            total += table["Red / Black"]["Total Amount"]
         if self.black_var.get():
-            total += bet
+            total += table["Red / Black"]["Total Amount"]
+        if self.even_var.get():
+            total += table["Even / Odd"]["Total Amount"]
+        if self.odd_var.get():
+            total += table["Even / Odd"]["Total Amount"]
+        if self.low_var.get():
+            total += table["Low / High"]["Total Amount"]
+        if self.high_var.get():
+            total += table["Low / High"]["Total Amount"]
+        if self.dozen1_var.get():
+            total += table["Dozen"]["Total Amount"]
+        if self.dozen2_var.get():
+            total += table["Dozen"]["Total Amount"]
+        if self.dozen3_var.get():
+            total += table["Dozen"]["Total Amount"]
+        if self.column1_var.get():
+            total += table["Column"]["Total Amount"]
+        if self.column2_var.get():
+            total += table["Column"]["Total Amount"]
+        if self.column3_var.get():
+            total += table["Column"]["Total Amount"]
         if self.voisins_var.get():
-            total += 9 * bet
+            voisins_total = sum(v["Total Amount"] for k, v in table.items()
+                                if k.startswith("Voisins du Zero"))
+            total += voisins_total
         if self.orphelins_var.get():
-            total += 5 * bet
+            orphelins_total = sum(v["Total Amount"] for k, v in table.items()
+                                   if k.startswith("Orphelins"))
+            total += orphelins_total
         if self.tiers_var.get():
-            total += 6 * bet
+            tiers_total = sum(v["Total Amount"] for k, v in table.items()
+                              if k.startswith("Tiers du Cylindre"))
+            total += tiers_total
 
         return total
 
@@ -268,6 +409,21 @@ class StrategyBuilder(tk.Tk):
                 df.to_csv(path, index=False)
 
         ttk.Button(top, text='Save CSV', command=save_csv).pack(pady=5)
+
+    def show_bets_table(self):
+        """Display the full roulette bets table for the selected minimum bet."""
+        table = roulette_bets_table(self.min_bet.get())
+
+        top = tk.Toplevel(self)
+        top.title('Roulette Bets Table')
+
+        tree = ttk.Treeview(top, columns=('Bet', 'Units', 'Total', 'Type'), show='headings')
+        for col in ('Bet', 'Units', 'Total', 'Type'):
+            tree.heading(col, text=col)
+            tree.column(col, anchor='center')
+        for bet, vals in table.items():
+            tree.insert('', 'end', values=(bet, vals['Units'], vals['Total Amount'], vals['Type']))
+        tree.pack(fill='both', expand=True)
 
 
     @staticmethod
